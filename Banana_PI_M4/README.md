@@ -41,6 +41,7 @@ List of awesome embedded resource.
 ### HardWare Specification of Banana pi BPI-M4
 
 | -   	           |      HardWare Specification of Banana pi BPI-M4                             |
+|------------------|-----------------------------------------------------------------------------|
 |CPU	           |      Realtek RTD1395 ARM Cortex-A53 Quad-Core 64 Bit                        |
 |GPU	           |      Mali 470 MP4 GPU OpenGL ES 1.1/2.0                                     |
 |Memory	           |      1 GB DDR4 (option 2 GB)                                                |
@@ -58,3 +59,4 @@ List of awesome embedded resource.
 |Power Source	   |     5 volt @2A via Micro USB (TYPE C) or PoE support                        |
 |Size & Weight	   |     92x60mm, 48g                                                            |
 |OS	               |     Android and Linux                                                       |
+|------------------|-----------------------------------------------------------------------------|
