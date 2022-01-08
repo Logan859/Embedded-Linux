@@ -1,12 +1,19 @@
 # Embedded-Linux
+
 A Workspace for Embedded Linux Projects
 
 * [Linux 4.20.0 Documentation](https://www.kernel.org/doc/html/v4.20/)
 * [Linux 5.15.0 Documentation](https://www.kernel.org/doc/html/v5.15/)
 * [Linux Latest Documentation](https://www.kernel.org/doc/html/latest/)
 
+Online Linux Source Browsing
+
 * [Online Linux Repositories - bootlin](https://elixir.bootlin.com/linux/latest/source)
 * [Online Linux Code Browse - woboq](https://code.woboq.org/linux/linux/)
+
+Guides
+
+* [Linux Documentation Project Guides - tldp](https://tldp.org/guides.html)
 
 # Other Useful Repositories:
 
