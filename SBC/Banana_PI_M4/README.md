@@ -1,5 +1,9 @@
 # Banana_PI_M4 Resource Repository
 
+![Optional Text](./Extra/Extra/BPI-M4 Digital Images/BPI-M4 3.jpg)
+![Optional Text](./Extra/Extra/Banana_Pi_BPI-M4_interface.JPG)
+![Optional Text](./Extra/Extra/Chip_Architecture.png)
+
 List of awesome embedded resource.
 
 * [Intoduction](https://www.banana-pi.org/m4.html)
