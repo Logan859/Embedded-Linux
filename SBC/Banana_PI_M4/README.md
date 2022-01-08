@@ -1,6 +1,5 @@
 # Banana_PI_M4 Resource Repository
 
-![Optional Text](./Extra/BPI-M4 Digital Images/BPI-M4 3.jpg)
 ![Optional Text](./Extra/Banana_Pi_BPI-M4_interface.JPG)
 ![Optional Text](./Extra/Chip_Architecture.png)
 
@@ -63,4 +62,3 @@ List of awesome embedded resource.
 |Power Source	   |     5 volt @2A via Micro USB (TYPE C) or PoE support                        |
 |Size & Weight	   |     92x60mm, 48g                                                            |
 |OS	               |     Android and Linux                                                       |
-|------------------|-----------------------------------------------------------------------------|
