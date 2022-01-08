@@ -1,4 +1,10 @@
-# Embedded-Linux
+# Useful Links And Resouces
+
+* [KernelNewBies](https://kernelnewbies.org/)
+* [Bootlin Documentation](https://bootlin.com/docs/)
+* [Quora - How do I learn Linux kernel development?](https://www.quora.com/How-do-I-learn-Linux-kernel-development)
+
+# Linux Sources
 
 Linux Projects Documentation
 
