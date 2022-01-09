@@ -26,6 +26,7 @@ Yocto - Project
 
 * [Yocto Project Quick Build](https://www.yoctoproject.org/docs/2.5/brief-yoctoprojectqs/brief-yoctoprojectqs.html)
 * [Yocto Project Repository](https://git.yoctoproject.org/poky)
+* [Yocto Project Documentation](https://docs.yoctoproject.org/)
 
 Buildroot Project
 
