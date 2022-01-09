@@ -1,0 +1,13 @@
+Setup Yocto Plugin with Eclipse:
+
+https://develop.phytec.com/how-to-articles/how-to-set-up-yocto-plugin-for-eclipse#Howto:SetUpYoctoPluginforEclipse-EclipseSetup
+https://community.nxp.com/t5/i-MX-Processors-Knowledge-Base/Setting-up-the-Eclipse-IDE-for-Yocto-Application-Development/ta-p/1110480
+https://variwiki.com/index.php?title=Yocto_Programming_with_Eclipse
+https://developer.toradex.com/getting-started/module-2-my-first-hello-world-in-c/cc-application-development-with-the-yocto-projectopenembedded
+https://www.youtube.com/watch?v=poU8jc41_xc
+https://www.youtube.com/watch?v=O22IWe4kUE8
+
+
+Setup Hello World:
+https://www.youtube.com/watch?v=3HsaoVqX7dg
+https://www.youtube.com/playlist?list=PLVHGdqy3TkC1iYmMZ0rnc0yWB3rhOV27S
