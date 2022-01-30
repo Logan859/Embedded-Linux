@@ -1,3 +1,3534 @@
+------------------------------------------------------------------------------
+                         YOCTO FOR EMBEDDED LINUX
+------------------------------------------------------------------------------
+
+
+Four elements of embedded Linux
+--------------------------------
+
+Toolchain: The compiler and other tools needed to create code for your target device. Everything else depends on the toolchain.
+
+Bootloader: The program that initializes the board and loads the Linux kernel.
+
+Kernel: This is the heart of the system, managing system resources and interfacing with hardware.
+
+Root filesystem: Contains the libraries and programs that are run once the kernel has completed its initialization.
+
+One more element can be collection of programs specific to your embedded application which make the device do whatever it is supposed to do, be it weigh groceries, display movies, control a robot, or fly a drone.
+
+
+
+
+
+Yocto project provides open source, high quality infrastructure and tools to help developers create their own custom Linux distributions for any hardware architecture.
+
+
+
+
+Advantages of Yocto Project
+----------------------------
+
+1. Widely Adopted Across the Industry
+	Semiconductor, operating system, software, and service vendors exist whose products and services adopt and support the Yocto Project.
+	Eg. Intel, Facebook, arm, Juniper Networks, LG, AMD, NXP, DELL
+
+2. Architecture Agnostic
+	supports Intel, ARM, MIPS, AMD, PPC and other architectures
+	chip vendors create and supply BSPs that support their hardware
+	if you have custom silicon, you can create a BSP that supports that architecture
+	the Yocto Project fully supports a wide range of device emulation through the Quick EMUlator (QEMU)
+
+3. Images and Code Transfer Easily
+	Yocto Project output can easily move between architectures without moving to new development environments.
+
+4. Flexibility
+	Through customization and layering, a project group can leverage the base Linux distribution to create a distribution that works for their product needs.
+
+5. Ideal for Constrained Embedded and IoT devices
+	Unlike a full Linux distribution, you can use the Yocto Project to create exactly what you need for embedded devices
+	You only add the feature support or packages that you absolutely need for the device
+
+6. Uses a Layer Model
+	The Yocto Project layer infrastructure groups related functionality into separate bundles.
+	You can incrementally add these grouped functionalities to your project as needed
+	Allows you to easily extend the system, make customizations, and keep functionality organized.
+
+
+
+To understand the outcome provided by the Yocto Project, we can use the analogy of the computing machine
+
+Input: Set of data that describes what we want, that is our specification 
+		(Kernel Configuration, Hardware Name, Packages/Binaries to be installed)
+
+Output: Linux Based Embedded Product 
+		(Linux Kernel, Root File System, Bootloader, Device Tree, Toolchain)
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+Setting up Build Machine
+--------------------------
+
+Prerequisites
+----------------
+
+1. 50 Gbytes of free disk space
+
+2. Runs a supported Linux distribution (i.e. recent releases of Fedora, openSUSE, CentOS, Debian, or Ubuntu). 
+
+3. 
+	Git 1.8.3.1 or greater
+
+	tar 1.27 or greater
+
+	Python 3.4.0 or greater.
+
+Packages and package installation vary depending on your development system.
+
+(*) Install the required packages for Yocto to Work from
+        https://www.yoctoproject.org/docs/latest/ref-manual/ref-manual.html#ubuntu-packages
+
+$ sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib \
+    build-essential chrpath socat cpio python python3 python3-pip python3-pexpect \
+    xz-utils debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa libsdl1.2-dev \
+    pylint3 xterm
+	
+-------------------------------------------------------------------------------------------------------------------------
+Poky
+-------------------------------------------------
+
+Poky is a reference distribution of Yocto Project. The word "reference" is used to mean "example" in this context.
+
+Yocto Project uses Poky to build images (kernel, system, and application software) for targeted hardware.
+
+At the technical level it is a combined repository of the components
+	• Bitbake
+	• OpenEmbedded Core
+	• meta-yocto-bsp
+	• Documentation
+
+Note: Poky does not contain binary files,it is a working example of how to build your own custom Linux distribution from source.
+
+
+-------------------------------------------------
+Metadata 
+-------------------------------------------------
+
+Non Yocto:  A set of data that describes and gives information about other data
+
+Yocto World: 
+	Metadata refers to the build instructions
+	Commands and data used to indicate what versions of software are used
+	Where they are obtained from
+	Changes or additions to the software itself ( patches ) which are used to fix bugs or customize the software for use in a particular situation
+
+Metadata is collection of
+	• Configuration files (.conf)
+	• Recipes (.bb and .bbappend)
+	• Classes (.bbclass)
+	• Includes (.inc)
+
+Poky = Bitbake + Metadata
+
+Metadata is collection of
+	• Configuration files (.conf)
+	• Recipes (.bb and .bbappend)
+	• Classes (.bbclass)
+	• Includes (.inc)
+
+-------------------------------------------------
+Recipes
+-------------------------------------------------
+
+Yocto: A recipe is a set of instructions that is read and processed by the bitbake
+
+Extension of Recipe: .bb
+
+A recipe describes:
+    where you get source code
+    which patches to apply
+    Configuration options
+    Compile options (library dependencies)
+    Install
+    License
+
+a software component
+
+
+Examples of Recipes
+----------------------
+
+dhcp_4.4.1.bb
+gstreamer1.0_1.16.1.bb
+
+-------------------------------------------------
+Configuration Files
+-------------------------------------------------
+
+Files which hold
+    global definition of variables
+    user defined variables and
+    hardware configuration information
+
+They tell the build system what to build and put into the image to support a particular platform
+
+Extension: .conf
+
+Types
+--------
+
+	• Machine Configuration Options
+	• Distribution Configuration Options
+	• Compiler tuning options
+	• General Common Configuration Options
+	• User Configuration Options (local.conf)
+
+-------------------------------------------------	
+classes
+-------------------------------------------------
+
+Class files are used to abstract common functionality and share it amongst multiple recipe (.bb) files
+
+To use a class file, you simply make sure the recipe inherits the class
+
+Eg. inherit classname
+
+Extension: .bbclass
+
+They are usually placed in classes directory inside the meta* directory
+
+Example of classes
+-------------------
+
+cmake.bbclass - Handles cmake in recipes
+kernel.bbclass - Handles building kernels. Contains code to build all kernel trees
+module.bbclass - Provides support for building out-of-tree Linux Kernel Modules
+
+-------------------------------------------------
+Layers
+-------------------------------------------------
+
+A collection of related recipes.
+
+or
+
+Layers are recipe containers (folders)
+
+Typical naming convention: meta-<layername>
+
+Poky has the following layers:
+
+meta, meta-poky, meta-selftest, meta-skeleton, meta-yocto-bsp
+
+Why Layers
+-----------
+
+ Layers provide a mechanism to isolate meta data according to functionality, for instance BSPs, distribution configuration, etc.
+
+You could have a BSP layer, a GUI layer, a distro configuration, middleware, or an application
+
+Putting your entire build into one layer limits and complicates future customization and reuse. 
+
+Example: meta-poky          -- Distro metadata
+         meta-yocto-bsp     -- BSP    metadata
+
+Layers allow to easily to add entire sets of meta data and/or replace sets with other sets.
+meta-poky, is itself a layer applied on top of the OE-Core metadata layer, meta
+
+Which layers are used by Poky build system?
+-------------------------------------------
+
+BBLAYERS variable present in build/conf/bblayers.conf file list the layers Bitbake tries to find
+
+If bblayers.conf is not present when you start the build, the OpenEmbedded build system creates it from bblayers.conf.sample when you source the oe-init-build-env script
+
+Command to find out which layers are present
+----------------------------------------------
+
+$ bitbake-layers show-layers
+
+Note: You can include any number of available layers from the Yocto Project 
+
+Where to get other layers
+--------------------------
+
+https://layers.openembedded.org/layerindex/branch/master/layers/
+
+Yocto Project Compatible Layers
+--------------------------------
+
+https://www.yoctoproject.org/software-overview/layers/
+
+
+
+
+-------------------------------------------------
+Image
+-------------------------------------------------
+
+An image is the top level recipe, it has a description, a license and inherits the core-image class
+
+It is used alongside the machine definition
+
+machine describes the hardware used and its capabilities
+
+image is architecture agnostic and defines how the root filesystem is built, with what packages.
+
+By default, several images are provided in Poky
+
+Command to check the list of available image recipes
+----------------------------------------------------
+
+$ ls meta*/recipes*/images/*.bb
+
+
+----------------------------------------------------
+Packages
+----------------------------------------------------
+
+Non-Yocto: Any wrapped or boxed object or group of objects.
+
+Yocto: A package is a binary file with name *.rpm, *.deb, or *.ipkg
+
+A single recipe produces many packages. All packages that a recipe generated are listed in the recipe variable
+
+
+$ vi  meta/recipes-multimedia/libtiff/tiff_4.0.10.bb
+PACKAGES =+ "tiffxx tiff-utils"
+
+
+------------------------------------------------------------------------------------------------------------------
+OpenEmbedded Project
+-----------------------
+
+From http://www.openembedded.org/wiki/Main_Page
+
+OpenEmbedded offers a best-in-class cross-compile environment. It allows developers to create a complete Linux Distribution for embedded systems.
+
+What is the difference between OpenEmbedded and the Yocto Project?
+------------------------------------------------------------------
+
+The Yocto Project and OpenEmbedded share a core collection of metadata called openembedded-core. 
+
+However, the two organizations remain separate, each with its own focus
+
+OpenEmbedded provides a comprehensive set of metadata for a wide variety of architectures, features, and applications
+
+	Not a reference distribution
+	Designed to be the foundation for others
+
+The Yocto Project focuses on providing powerful, easy-to-use, interoperable, well-tested tools, metadata, and board support packages (BSPs) for a core set of architectures and specific boards.
+
+
+OpenEmbedded-Core(oe-core)
+---------------------------
+
+The Yocto Project and OpenEmbedded have agreed to work together and share a common core set of metadata(recipes, classes and associated files): oe-core
+
+
+
+Bitbake
+-----------
+
+Bitbake is a core component of the Yocto Project.
+
+It basically performs the same functionality as of make.
+
+It's a task scheduler that parses python and shell script mixed code
+
+The code parsed generates and runs tasks, which are basically a set of steps ordered according to code's dependencies.
+
+It reads recipes and follows them by fetching packages, building them and incorporating the results into bootable images.
+
+It keeps track of all tasks being processed in order to ensure completion, maximizing the use of processing resources to reduce build time and being predictable.
+
+
+
+meta-yocto-bsp
+----------------
+
+A Board Support Package (BSP) is a collection of information that defines how to support a particular hardware device, set of devices, or hardware platform
+
+The BSP includes information about the hardware features present on the device and kernel configuration information along with any additional hardware drivers required.
+
+The BSP also lists any additional software components required in addition to a generic Linux software stack for both essential and optional platform features.
+
+The meta-yocto-bsp layer in Poky maintains several BSPs such as the Beaglebone, EdgeRouter, and generic versions of both 32-bit and 64-bit IA machines.
+
+Machines supported
+-------------------
+Texas Instruments BeagleBone (beaglebone)
+Freescale MPC8315E-RDB (mpc8315e-rdb)
+Intel x86-based PCs and devices (genericx86 and genericx86-64)
+Ubiquiti Networks EdgeRouter Lite (edgerouter)
+
+Note: To develop on different hardware, you will need to complement Poky with hardware-specific Yocto layers.
+
+
+meta-poky, 
+--------------------
+which is Poky-specific metadata
+
+Documentation, which contains the Yocto Project source files used to make the set of user manuals.
+
+-------------
+
+Poky includes 
+	some OE components(oe-core)
+	bitbake
+	demo-BSP's
+	helper scripts to setup environment
+	emulator QEMU to test the image
+
+
+-------------------------------------------------------------------------------------------------------------------------
+Workflow of Yocto Project
+===========================
+
+Step 1: Download the Poky Source code
+
+$ git clone git://git.yoctoproject.org/poky
+
+Step 2: Checkout the latest branch/release (zeus)
+
+$ git checkout zeus 
+
+Step 3: Prepare the build environment
+
+Poky provides you a script 'oe-init-build-env', which should be used to setup the build environment
+
+script will set up your environment to use Yocto build system,including adding the BitBake utility to your path
+
+$ source poky/oe-init-build-env [ build_directory ]
+
+Here build_directory is an optional argument for the name of the directory where the environment is set
+
+in case it is not given , it defaults to "build"
+
+The above script will move you in a build folder and create two files ( local.conf, bblayers.conf ) inside conf folder
+
+Step 4: Building Linux Distribution
+
+$ bitbake <image_name>
+$ time bitbake core-image-minimal
+
+core-image-minimal
+----------------------
+
+This is a small image allowing a device to boot, and it is very useful for kernel and boot loader tests and development
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+Command to run the generated image in QEMU
+==========================================
+
+Quick Emulator ( QEMU ) is a free and open source software package that performs hardware virtualization.
+
+The QEMU based machines allow test and development without real hardware.
+
+Currently emulations are supported for:
+        • ARM
+        • MIPS
+        • MIPS64
+        • PowerPC
+        • X86
+        • X86_64
+
+
+Poky provides a script 'runqemu' which will allow you to start the QEMU using yocto generated images.
+
+The runqemu script is run as:
+
+   runqemu <machine> <zimage> <filesystem>
+
+where:
+
+   <machine> is the machine/architecture to use (qemuarm/qemumips/qemuppc/qemux86/qemux86-64)
+   <zimage> is the path to a kernel (e.g. zimage-qemuarm.bin)
+   <filesystem> is the path to an ext2 image (e.g. filesystem-qemuarm.ext2) or an nfs directory
+
+Full usage instructions can be seen by running the command with no options specified.
+
+Exit QEMU
+-----------
+
+Exit QEMU by either clicking on the shutdown icon or by typing Ctrl-C in the QEMU transcript window from which you evoked QEMU.
+
+
+Steps to generate ARM image and run in QEMU
+==========================================
+
+When you set up the build environment, a local configuration file named local.conf becomes available in a conf subdirectory of the Build Directory
+
+The defaults are set to build for a qemux86-64 target
+
+Edit ./build/conf/local.conf
+
+Set
+
+MACHINE = "qemuarm"
+
+$ source poky/oe-init-build-env
+
+$ bitbake core-image-minimal
+
+$ runqemu core-image-minimal
+
+Nographic
+-----------
+
+You can launch QEMU without the graphic window by adding nographic to the command line
+
+$ runqemu qemuarm nographic
+
+
+
+To add a particular package in your root file system
+===================================================
+
+Open your local.conf file and add the recipe name below
+
+IMAGE_INSTALL += "recipe-name"
+
+E.g. IMAGE_INSTALL += "usbutils" for lsusb
+
+or IMAGE_INSTALL_append = " usbutils"
+
+
+
+core-image-sato
+----------------
+
+This is the X11 Window-system-based image with a SATO theme and a GNOME mobile desktop environment
+
+$ bitbake core-image-sato
+
+
+---------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------
+Poky source tree
+-------------------------------------------------------------
+
+bitbake		-	Holds all Python scripts used by the bitbake command
+			bitbake/bin is placed into the PATH environmental variable so bitbake can be found
+
+documentation   -       All documentation sources for the Yocto Project documentation
+			Can be used to generate nice PDFs
+
+meta		-	Contains the oe-core metadata
+			
+meta-poky	-	Holds the configuration for the Poky reference distribution
+			local.conf.sample, bblayers.conf.sample are present here
+
+meta-skeleton	- 	Contains template recipes for BSP and kernel development
+
+
+meta-yocto-bsp  -	Maintains several BSPs such as the Beaglebone, EdgeRouter, 
+			and generic versions of both 32-bit and 64-bit IA machines.
+
+scripts		-	Contains scripts used to set up the environment, development tools,
+			and tools to flash the generated images on the target.
+
+LICENSE		-	The license under which Poky is distributed (a mix of GPLv2 and MIT).
+
+-------------------------------------------------------------
+conf
+-------------------------------------------------------------
+
+When you run source poky/oe-init-build-env, it will create a "build" folder in that directory
+Inside this build folder, it will create "conf" folder which contains two files:
+
+1. local.conf
+2. bblayers.conf
+
+local.conf
+-------------
+
+Configures almost every aspect of the build system
+Contains local user settings
+
+MACHINE: The machine the target is built for
+	Eg: MACHINE = "qemux86-64"
+
+DL_DIR: Where to place downloads
+	During a first build the system will download many different source code tarballs,from various 
+	upstream projects.These are all stored in DL_DIR
+	The default is a downloads directory under TOPDIR which is the build directory
+
+TMP_DIR:  Where to place the build output
+	  This option specifies where the bulk of the building work should be done and
+	  where BitBake should place its temporary files(source extraction, compilation) and output
+
+Important Point:
+----------------
+
+local.conf file is a very convenient way to override several default configurations over all the Yocto Project's tools.
+
+Essentially, we can change or set any variable, for example, add additional packages to an image file
+
+Though it is convenient, it should be considered as a temporary change as the build/conf/local.conf file is not usually tracked by any source code management system.
+
+
+-------------------------------------------------------------
+bblayers.conf
+-------------------------------------------------------------
+
+The bblayers.conf file tells BitBake what layers you want considered during the build.
+
+By default, the layers listed in this file include layers minimally needed by the build system
+
+However, you must manually add any custom layers you have created
+
+E.g: BBLAYERS = "\
+                                  /home/linuxtrainer/poky/meta \
+                                 /home/linuxtrainer/poky/meta-poky \
+                                 /home/linuxtrainer/poky/meta-yocto-bsp \
+                                 /home/linuxtrainer/poky/meta-mylayer \
+                                 "
+This example enables four layers, one of which is a custom user defined layer named "meta-mylayer"
+
+
+BB_NUMBER_THREADS
+-----------------
+
+	Determines the number of tasks that Bitbake will perform in parallel
+	Note: These tasks are related to bitbake and nothing related to compiling
+	Defaults to the number of CPUs on the system
+	$ bitbake -e core-image-minimal | grep ^BB_NUMBER_THREADS=
+
+
+PARALLEL_MAKE
+--------------
+
+	Corresponds to the -j make option
+	specifies the number of processes that GNU make can run in parallel on a compilation task
+	Defaults to the number of CPUs on the system
+	$ bitbake -e core-image-minimal | grep ^PARALLEL_MAKE=
+
+
+Other directories
+-----------------
+
+downloads	    -	downloaded upstream tarballs/git repositories of the recipes used in the build
+
+sstate-cache	-	shared state cache
+
+tmp		        -	Holds all the build system output
+
+			        tmp/deploy/images/machine - Images are present here
+			
+cache	    	-	cache used by the bitbake's parser
+
+
+Yocto/OpenEmbedded Build System Workflow
+-----------------------------------------
+
+1. Developers specify architecture, policies, patches and configuration details.
+
+2. The build system fetches and downloads the source code from the specified location
+	supports downloading tarballs and source code repositories systems such as git/svn
+
+3. extracts the sources into a local work area
+
+4. patches are applied
+
+5. steps for configuring and compiling the software are run
+
+6. installs the software into a temporary staging area
+	depending on the user configuration, deb/rpm/ipk binaries are generated
+
+7. the build system generates a binary package feed that is used to create the final root file image.
+
+8. finally generates the file system image and a customized Extensible SDK (eSDK) for application development in parallel
+
+
+Images generated by Poky Build
+---------------------------------
+
+The build process writes images out to the Build Directory inside the tmp/deploy/images/machine/ folder
+
+1. kernel-image: 
+		A kernel binary file
+		The KERNEL_IMAGETYPE variable determines the naming scheme for the kernel image file.
+		$ bitbake -e core-image-minimal | grep ^KERNEL_IMAGETYPE=
+
+2. root-filesystem-image: 
+		Root filesystems for the target device (e.g. *.ext3 or *.bz2 files).
+		The IMAGE_FSTYPES variable determines the root filesystem image type
+		$ bitbake -e core-image-minimal | grep ^IMAGE_FSTYPES=
+
+3. kernel-modules:
+		Tarballs that contain all the modules built for the kernel
+
+4. bootloaders:
+		If applicable to the target machine, bootloaders supporting the image.
+
+symlinks
+-----------
+	symbolic link pointing to the most recently built file for each machine
+	These links might be useful for external scripts that need to obtain  latest version of each file
+
+
+
+Saving Disk Space while building Yocto 
+=====================================
+
+Yocto Build System can take a lot of disk space during build. But bitbake provides options to preserve disk space
+
+You can tell bitbake to delete all the source code, build files after building a particular recipe by adding the following line in local.conf file
+
+INHERIT += "rm_work"
+
+Disadvantage: Difficult to debug while build fails of any recipe.
+
+For example, if you want to exclude bitbake deleting source code of a particular package, you can add it in RM_WORK_EXCLUDE += "recipe-name"
+
+E.g: RM_WORK_EXCLUDE += "core-image-minimal"
+
+
+Layers and Branches
+---------------------
+
+Layers being developed simultaneously by several different parties, the different flavors of Yocto and subsequent layers have to be split into branches in Git
+
+Most BSP layers will only work with OpenEmbedded-Core of the same branch.
+
+Mixing branches among your layers will end up in conflicts
+
+For example, the so called bbappends, sometimes are tied to specific version number and will break the build if those versions are not found in the layers.
+
+Which Branch to choose?
+-------------------------
+
+You should evaluate all the layers and find a compromise between:
+
+    Getting the latest stable branch
+    Getting the latest branch supported by all layers.
+
+Note:  yocto branch you decided to use, could not be supported by your current host linux distribution.
+Eg:  I want to use a layer which forces me to stick with Krogoth, but this branch is not tested with newer distributions such as Ubunutu 16.04 or 18.04.
+
+------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------
+What is BSP Layer?
+-------------------
+
+A collection of information(metadata) that defines how to support 
+	a particular hardware device, 
+	set of devices, or 
+	hardware platform
+	
+BSP Layer
+----------
+
+Naming Convention: meta-<bsp_name>
+
+How to find out what all hardware devices are supported
+---------------------------------------------------------
+
+conf/machine/*.conf list all the hardware devices supported by the BSP layer
+
+meta-ti
+----------
+
+BSP Layer for Texas Instrument Hardware
+
+$ cd sources
+
+$ git clone git://git.yoctoproject.org/meta-ti
+
+
+Hardware Configuration Supported
+----------------------------------
+
+a) Beagle Bone Black
+
+b) Beagle Board
+
+c) Panda Board
+
+d) OMAP boards
+
+
+
+meta-ti vs meta-yocto-bsp
+--------------------------
+
+meta-yocto-bsp:
+---------------
+
+    provides "reference" BSPs for each of the supported architectures
+    One for ARM (BeagleBone Black), one for MIPS, PPC and x86.
+    it is based on the mainline kernel/bootloader
+    does not support any advanced features or anything not in the upstream mainline kernel
+    e.g. no capes, no power management, no hardware acceleration, no 3D, no PRU, etc.
+    The purpose of this BSP is to have some basic out-of-box experience for the select hardware platforms within Poky to evaluate the Yocto Project and OpenEmbedded framework, but not the specific hardware platforms
+
+meta-ti
+----------
+
+    official Texas Instruments BSP that provides the latest WIP "staging" kernel and bootloader
+    most of the advanced features and peripheral support for the wider range of latest TI platforms
+	
+	
+Adding Layers
+--------------
+
+Two ways:
+
+1. Manual: edit bblayers.conf file and add the new layer to BBLAYERS
+2. Automatic: 
+
+$ bitbake-layers add-layer <path-to-new-layer>
+
+$ bitbake-layers add-layer ~/Yocto_Training/source/meta-ti/
+
+
+Steps for building
+-------------------
+
+Step1 : Source the environment script
+
+	$ source poky/oe-init-build-env
+
+	Add the meta-ti layer
+
+	$ bitbake-layers add-layer ~/Yocto_Training/source/meta-ti/
+
+Step2 : Open local.conf and set Machine to beaglebone
+	MACHINE='beaglebone'
+
+Step3 : Also add INHERIT += "rm_work" to save disk space
+
+Step4 : Generate an minimal image
+
+	$ bitbake core-image-minimal
+
+Step5 : Once the build finished, you will find the output images under $BUILDDIR/tmp/deploy/images/beaglebone  
+
+
+
+Flashing the image on the SD Card using wic
+--------------------------------------------
+
+wic images are SD Card images and can be directly written into sd-card
+
+core-image-minimal-beaglebone.wic.xz is compressed wic image.
+
+It can be uncompressed using the unxz utility
+
+$ unxz core-image-minimal-beaglebone.wic.xz
+
+$ ls -lh core-image-minimal-beaglebone.wic
+
+Flash it to the sd card
+
+$ lsblk
+
+$ sudo dd if=core-image-minimal-beaglebone.wic of=/dev/sdb bs=4096 status=progress && sync
+
+
+
+
+
+======================================================================================================
+
+Basic Variable Setting (=)
+---------------------------
+
+VARIABLE = "value"
+
+The following example sets VARIABLE to "value".
+
+Eg. MACHINE = "raspberrypi3"
+
+This assignment occurs immediately as the statement is parsed
+
+It is a "hard" assignment
+
+If you include leading or trailing spaces as part of an assignment, the spaces are retained:
+
+VARIABLE = " value"
+VARIABLE = "value "
+
+Note: You can also use single quotes ('') instead of double quotes when setting a variable's value
+Benefit:
+
+VARIABLE = 'I have a " in my value'
+
+
+
+Line Joining
+--------------
+
+BitBake joins any line ending in a backslash character ("\") with the following line before parsing statements
+
+The most common use for the "\" character is to split variable assignments over multiple lines
+
+BBLAYERS ?= " \
+  /home/linuxtrainer/Yocto_Training/source/poky/meta \
+  /home/linuxtrainer/Yocto_Training/source/poky/meta-poky \
+  /home/linuxtrainer/Yocto_Training/source/poky/meta-yocto-bsp \
+  "
+
+$ bitbake -e | grep ^BBLAYERS
+
+
+Setting a default value(?=)
+----------------------------
+
+?= is used for soft assignment for a variable
+
+What's the benefit?
+------------------
+
+Allows you to define a variable if it is undefined when the statement is parsed,
+
+If the variable has a value, then the soft assignment is lost
+
+Eg:
+
+MACHINE ?= "qemuarm"
+
+If MACHINE is already set before this statement is parsed, the above value is not assigned
+
+If MACHINE is not set, then the above value is assigned
+
+Note: Assignment is immediate
+
+What happens if we have multiple ?=
+--------------------------------------
+If multiple "?=" assignments to a single variable exist, the first of those ends up getting used
+
+
+
+Setting a weaker default value (??=)
+-------------------------------------
+
+Weaker default value is achieved using the ??=  operator
+
+Difference between ?= and ??=
+-------------------------------
+
+Assignment is made at the end of the parsing process rather than immediately.
+
+When multiple "??=" assignments exist, the last one is used
+
+Eg.
+--------
+
+MACHINE ??= "qemux86"
+MACHINE ??= "qemuarm"
+
+If MACHINE is not set, the value of MACHINE = "qemuarm"
+If MACHINE is set, before the statements, then the value will not be changed
+
+It is called weak assignment, as assignment does not occur until the end of the parsing process.
+
+Note: "=" or "?=" assignment will override the value set with "??="
+
+
+
+
+Variable Expansion
+-------------------
+
+Variables can reference the contents of other variables using a syntax that is similar to variable expansion in Bourne shells
+
+A = "hello"
+B = "${A} world"
+
+$ bitbake -e | grep ^A=
+$ bitbake -e | grep ^B=
+
+The "=" operator does not immediately expand variable references in the right-hand side
+
+Instead, expansion is deferred until the variable assigned to is actually used
+
+A = "${B} hello"
+B = "${C} world"
+C = "linux"
+
+$ bitbake -e | grep ^A=
+
+What happens if C is not defined in above?
+--------------------------------------------
+the string is kept as is
+
+
+Immediate Variable Expansion (:=)
+-----------------------------------
+
+The ":=" operator results in a variable's contents being expanded immediately, rather than when the variable is actually used
+
+A = "11"
+B = "B:${A}"
+A = "22"
+C := "C:${A}"
+D = "${B}"
+
+
+A = "11"
+B := "B:${A}"
+A = "22"
+C := "C:${A}"
+D = "${B}"
+
+
+Appending operators
+--------------------
+
++=
+--------
+
+A = "hello"
+A += "world"
+
+.=
+--------
+
+A = "hello"
+A .= "world"
+
+Difference between += and .= is space is automatically added in += 
+
+These operators take immediate effect during parsing
+
+
+Prepending Operators
+-------------------
+
+=+
+------
+
+A = "world"
+A =+ "hello"
+
+=.
+----------
+
+A = "world"
+A =. "hello"
+
+Same as previous, =+ adds an additional space
+
+
+
+Appending and Prepending (Override Style Syntax)
+-------------------------------------------------
+
+You can also append and prepend a variable's value using an override style syntax.
+
+When you use this syntax, no spaces are inserted.
+
+A = "hello"
+A_append = " world"
+
+B = "test"
+B_append = "world"
+
+C = "full"
+C_prepend = "house"
+
+
+Removal
+------------
+
+You can remove values from lists using the removal override style syntax
+
+Specifying a value for removal causes all occurrences of that value to be removed from the variable.
+
+FOO = "123 456 789 123456 123 456 123 456"
+FOO_remove = "123"
+
+$ bitbake -e | grep ^FOO=
+
+
+Override Style Operation Advantages
+----------------------------------
+
+An advantage of the override style operations "_append", "_prepend", and "_remove" as compared to the "+=" and "=+" operators is that the override style operators provide guaranteed operations
+
+IMAGE_INSTALL += "usbutils"
+
+IMAGE_INSTALL_append = " usbutils"
+
+-----------------------------------------------------------------------------------------
+Create Layers
+-----------------------------------------------------------------------------------------
+
+What is a layer?
+----------------
+
+A layer is a logical collection of related recipes.
+
+Types of Layers: oe-core, BSP Layer, application layer
+
+Layer name starts with meta-, but this is not a technical restriction.
+
+Eg. meta-mycustom
+
+Why create a meta layer?
+---------------------------
+
+Despite most of the customization can be done with the local.conf configuration file, it is not possible to:
+
+	Store recipes for your own software projects
+
+	Create your own images
+
+	Consolidate patches/modifications to other people’s recipes
+
+	Add a new custom kernel
+
+	Add a new machine
+
+
+Most important point: Do not edit POKY/UPSTREAM Layers, as it complicates future updates
+Advantage: This allows you to easily port from one version of Poky to another
+
+
+Depending on the type of layer, add the content:
+
+	If the layer is adding support for a machine, add the machine configuration in conf/machine/
+
+	If the layer is adding distro policy, add the distro configuration in conf/distro/
+
+	If the layer introduces new recipes, put the recipes you need in recipes-* subdirectories of the layer directory.
+
+Recipe directories inside layers
+-------------------------------
+
+By convention, recipes are splitted into categories
+
+The most difficult part is deciding in which category your recipe will go
+
+By checking what was already done in the official layers should give you a good idea of what you should do
+
+Layer Priority:
+---------------
+
+	Each layer has a priority, which is used by bitbake to decide which layer takes precedence if there are recipe files with the same name in multiple layers
+
+	A higher numeric value represents a higher priority.
+	
+
+Creating Layer
+-----------------
+
+There are two ways to create your own layer.
+1. Manually
+2. Using script
+
+Manually:
+----------
+
+Step 1 : Create a directory for the layer. For example: 'meta-mylayer'
+
+Step 2 : Create a conf/layer.conf
+		You can simply copy meta-oe's one and just change "openembedded-layer" to something appropriate for your layer; you may also want to set the priority as appropriate.
+
+Step 3 : Update bblayers.conf file with the new layer
+
+
+Creating layer using tool
+---------------------------
+
+You can create your own layer using the bitbake-layers create-layer command
+
+$ bitbake-layers create-layer --help
+
+The tool automates layer creation by setting up a subdirectory with a layer.conf configuration file, a recipes-example subdirectory that contains an example.bb recipe, a licensing file, and a README
+
+$ bitbake-layers create-layer ../source/meta-mylayer
+
+Default priority of the layer is 6
+
+$ bitbake-layers add-layer ../source/meta-mylayer
+
+$ bitbake-layers show-layers
+
+
+
+Layer Configuration File layer.conf
+-----------------------------------
+
+# The configuration and classes directory is appended to BBPATH
+BBPATH .= ":${LAYERDIR}"
+
+# The recipes for the layers are appended to BBFILES
+BBFILES += "${LAYERDIR}/recipes-*/*/*.bb ${LAYERDIR}/recipes-*/*/*.bbappend"
+
+# The BBFILE_COLLECTIONS variable is then appended with the layer name
+BBFILE_COLLECTIONS += "skeleton"
+BBFILE_PATTERN_skeleton = "^${LAYERDIR}/"
+# The BBFILE_PRIORITY variable then assigns a priority to the layer. 
+BBFILE_PRIORITY_skeleton = "1"
+
+# This should only be incremented on significant changes that will
+# cause compatibility issues with other layers
+LAYERVERSION_skeleton = "1"
+
+LAYERDEPENDS_skeleton = "core"
+
+LAYERSERIES_COMPAT_skeleton = "zeus"
+
+
+
+yocto-check-layer
+------------------
+
+The yocto-check-layer script provides you a way to assess how compatible your layer is with the Yocto Project
+
+You should use this script if you are planning to apply for Yocto Project Compatible Program
+
+$ source oe-init-build-env
+
+$ yocto-check-layer your_layer_directory
+ 
+
+
+
+
+What is an image
+--------------------
+
+Image is a top level recipe. (It inherits an image.bbclass)
+
+Building an image creates an entire Linux distribution from source
+
+        Compiler, tools, libraries
+        BSP: Bootloader, Kernel
+        Root filesystem:
+                ● Base OS
+                ● services
+                ● Applications
+                ● etc
+
+Creating custom images
+------------------------
+
+You often need to create your own Image recipe in order to add new packages or functionality
+
+Two ways
+------------
+
+a) creating an image from scratch
+b) extend an existing recipe (preferable)
+
+
+Package group
+--------------
+
+A package group is a set of packages that can be included on any image.
+
+A package group can contain a set of packages.
+
+Using the packagegroup name in IMAGE_INSTALL variable install all the packages defined by the package group into the root file system of your target image.
+
+There are many package groups. There are present in subdirectories named "packagegroups"
+
+$ find . -name 'packagegroups'
+
+They are recipe files(.bb) and starts with packagegroup- 
+
+For example, 
+
+packagegroup-core-boot: Provides the minimum set of packages necessary to create a bootable image with console.
+
+Creating an image from scratch
+-------------------------------
+
+The simplest way is to inherit the core-image bbclass, as it provides a set of image features that can be used very easily
+
+
+inherit core-image
+Which tells us that the definition of what actually gets installed is defined in the core-image.bbclass.
+
+Image recipes set IMAGE_INSTALL to specify the packages to install into an image through image.bbclass.
+ 
+Create an images directory
+
+$ mkdir -p recipes-examples/images
+
+Create the image recipe
+
+$ vi recipes-examples/images/lwl-image.bb
+
+SUMMARY = "A small boot image for LWL learners"
+LICENSE = "MIT"
+inherit core-image
+# Core files for basic console boot
+IMAGE_INSTALL = "packagegroup-core-boot"
+IMAGE_ROOTFS_SIZE ?= "8192"
+#Add our needed applications
+IMAGE_INSTALL += "usbutils"
+
+Reusing an existing image
+--------------------------
+
+When an image mostly fits our needs and we need to do minor adjustments on it,it is very convenient to reuse its code
+
+This makes code maintenance easier and highlights the functional differences
+
+For example, if we want to include an application (lsusb)
+
+Create another recipe:
+
+$ vim recipes-examples/images/lwl-image-reuse.bb
+
+require recipes-core/images/core-image-minimal.bb
+IMAGE_INSTALL_append = " usbutils"
+
+
+Customizing Images Using Custom IMAGE_FEATURES and EXTRA_IMAGE_FEATURES
+-----------------------------------------------------------------------
+
+Another method for customizing your image is to enable or disable high-level image features by using the IMAGE_FEATURES and EXTRA_IMAGE_FEATURES variables
+
+IMAGE_FEATURES/EXTRA_IMAGE_FEATURES is made to enable special features for your image, such as empty password for root, debug image, special packages, x11, splash, ssh-server
+
+What's the difference between IMAGE_FEATURES and EXTRA_IMAGE_FEATURES
+-----------------------------------------------------------------------
+
+Best practice is to 
+
+	Use IMAGE_FEATURES from a recipe
+
+	Use EXTRA_IMAGE_FEATURES from local.conf
+
+How it works?
+---------------
+
+To understand how these features work, the best reference is meta/classes/core-image.bbclass
+
+This class lists out the available IMAGE_FEATURES of which most map to package groups while some, such as debug-tweaks and read-only-rootfs, resolve as general configuration settings
+
+In summary, the file looks at the contents of the IMAGE_FEATURES variable and then maps or configures the feature accordingly
+
+Based on this information, the build system automatically adds the appropriate packages or configurations to the IMAGE_INSTALL variable.
+
+
+Example of IMAGE_FEATURES
+---------------------------
+
+To illustrate how you can use these variables to modify your image, consider an example that selects the SSH server.
+
+The Yocto Project ships with two SSH servers you can use with your images: Dropbear and OpenSSH. 
+
+OpenSSH is a well-known standard SSH server implementation
+
+Dropbear is a minimal SSH server appropriate for resource-constrained environments
+
+By default, the core-image-sato image is configured to use Dropbear. The core-image-full-cmdline and core-image-lsb images both include OpenSSH.
+
+The core-image-minimal image does not contain an SSH server.
+
+debug-tweaks
+---------------
+
+In the default state, local.conf file has EXTRA_IMAGE_FEATURES set to "debug-tweaks"
+
+debug-tweaks features enable password-less login for the root user
+
+Advantage: makes logging in for debugging or inspection easy during development 
+
+Disadvantage: anyone can easily log in during production.
+
+So, you need to remove the 'debug-tweaks' feature from production image
+
+Read-Only Root Filesystem
+-----------------------------
+
+Why do we need read-only rootfs
+---------------------------------
+
+	Reduce wear on flash memory
+
+	Eliminate system file corruption
+
+How to do it?
+---------------
+
+To create the read-only root filesystem, simply add the "read-only-rootfs" feature to your image.
+
+IMAGE_FEATURES = "read-only-rootfs" in your recipe
+
+	or
+
+EXTRA_IMAGE_FEATURES += "read-only-rootfs" in local.conf
+
+
+Boot Splash screen
+--------------------
+
+IMAGE_FEATURES += "splash"
+
+or
+
+EXTRA_IMAGE_FEATURES += "splash"
+
+Some other Features
+--------------------
+
+tools-debug: Installs debugging tools such as strace and gdb.
+
+tools-sdk: Installs a full SDK that runs on the device.
+
+IMAGE_LINGUAS
+--------------
+
+Specifies the list of locales to install into the image during the root filesystem construction process
+
+IMAGE_LINGUAS = "zh-cn"
+
+Inside qemu image
+$ locale -a
+
+IMAGE_FSTYPES
+----------------
+
+The IMAGE_FSTYPES variable determines the root filesystem image type
+
+If more than one format is specified, one image per format will be generated
+
+Image formats instructions are delivered in Poky: meta/classes/image_types.bbclass
+
+$ bitbake -e <image_name> | grep ^IMAGE_FSTYPES=
+
+Types supported
+-----------------
+
+btrfs
+     container
+     cpio
+     cpio.gz
+     cpio.lz4
+     cpio.lzma
+     cpio.xz
+     cramfs
+     elf
+     ext2
+     ext2.bz2
+     ext2.gz
+     ext2.lzma
+     ext3
+     ext3.gz
+     ext4
+     ext4.gz
+     f2fs
+     hddimg
+     iso
+     jffs2
+     jffs2.sum
+     multiubi
+     squashfs
+     squashfs-lz4
+     squashfs-lzo
+     squashfs-xz
+     tar
+     tar.bz2
+     tar.gz
+     tar.lz4
+     tar.xz
+     ubi
+     ubifs
+     wic
+     wic.bz2
+     wic.gz
+     wic.lzma
+
+Creating your own image type
+------------------------------
+
+If you have a particular layout on your storage (for example bootloader location on an SD card), you may want to create your own image type
+
+This is done through a class that inherits from image_types
+
+It has to define a function named IMAGE_CMD_<type>
+
+Example: sdcard_image-rpi.bbclass in meta-raspberrypi
+
+
+
+IMAGE_NAME
+----------------
+
+The name of the output image files minus the extension
+
+This variable is derived using the IMAGE_BASENAME, MACHINE, and DATETIME variables
+
+IMAGE_NAME = "${IMAGE_BASENAME}-${MACHINE}-${DATETIME}"
+
+
+
+IMAGE_MANIFEST
+----------------
+
+The manifest file for the image
+
+This file lists all the installed packages that make up the image.
+
+The file contains package information on a line-per-package basis as follows:
+
+packagename packagearch version
+
+
+The image class defines the manifest file as follows:
+
+	IMAGE_MANIFEST = "${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.rootfs.manifest"
+
+
+-----------------------------------------------------------------------------
+Recipes
+-----------------------------------------------------------------------------
+
+Recipes are fundamental components in the Yocto Project environment.
+
+A Yocto/OpenEmbedded recipe is a text file with file extension .bb
+
+Each software component built by the OpenEmbedded build system requires a recipe to define the component
+
+A recipe contains information about single piece of software.
+
+What information is present in a recipe?
+----------------------------------------
+
+Information such as:
+
+        Location from which to download the unaltered source
+        any patches to be applied to that source (if needed)
+        special configuration options to apply
+        how to compile the source files and
+        how to package the compiled output
+
+Poky includes several classes that abstract the process for the most common development tools as projects based on Autotools, CMake, and QMake.
+
+
+Recipe File Format
+---------------------
+
+File Format: <base_name>_<version>.bb
+
+For example the file  dropbear_2019.78.bb in poky/meta/recipes-core/dropbear has
+base name    : dropbear
+version      : 2019.78
+
+Another Example:
+
+file tiff_4.0.10.bb in poky/meta/recipes-multimedia/libtiff/ has
+base name    : tiff
+version      : 4.0.10
+
+The recipe is for a C library to read and write tiff image files
+
+Note: Use lower-cased characters and do not include the reserved suffixes -native, -cross, -initial, or -dev 
+
+
+
+Bitbake
+------------
+
+Yocto/OpenEmbedded's build tool bitbake parses a recipe and generates list of tasks that it can execute to perform the build steps
+
+$ bitbake basename
+
+The most important tasks are
+
+do_fetch             Fetches the source code
+do_unpack            Unpacks the source code into a working directory
+do_patch             Locates patch files and applies them to the source code
+do_configure         Configures the source by enabling and disabling any build-time and
+                         configuration options for the software being built
+do_compile           Compiles the source in the compilation directory
+do_install           Copies files from the compilation directory to a holding area
+do_package           Analyzes the content of the holding area and splits it into subsets
+                         based on available packages and files
+do_package_write_rpm Creates the actual RPM packages and places them in the Package Feed area
+
+Generally, the only tasks that the user needs to specify in a recipe are 
+	do_configure,
+	do_compile and 
+	do_install ones. 
+
+The remaining tasks are automatically defined by the YP build system
+
+The above task list is in the correct dependency order. They are executed from top to bottom.
+
+You can use the -c argument to execute the specific task of a recipe.
+
+$ bitbake -c compile dropbear
+
+To list all tasks of a particular recipe
+
+$ bitbake <recipe name> -c listtasks
+
+
+Stage 1: Fetching Code (do_fetch)
+----------------------------------
+
+The first thing your recipe must do is specify how to fetch the source files.
+
+Fetching is controlled mainly through the SRC_URI variable
+
+Your recipe must have a SRC_URI variable that points to where the source is located.
+
+The SRC_URI variable in your recipe must define each unique location for your source files.
+
+Bitbake supports fetching source code from git, svn, https, ftp, etc
+
+URI scheme syntax: scheme://url;param1;param2
+
+scheme can describe a local file using file:// or remote locations with https://, git://, svn://, hg://, ftp://
+
+By default, sources are fetched in $BUILDDIR/downloads
+
+Examples of SRC_URI
+----------------------
+
+busybox_1.31.0.bb  : SRC_URI = "https://busybox.net/downloads/busybox-${PV}.tar.bz2"
+
+linux-yocto_5.2.bb : SRC_URI = "git://git.yoctoproject.org/linux-yocto.git"
+
+weston-init.bb	   : SRC_URI = "file://init"
+
+The do_fetch task uses the prefix of each entry in the SRC_URI variable value to determine how to fetch the source code.
+
+Note: Any patch files present, needs to be specified in SRC_URI
+
+
+Stage 2: Unpacking (do_unpack)
+-------------------------------
+
+All local files found in SRC_URI are copied into the recipe’s working directory, in $BUILDDIR/tmp/work/
+
+When extracting a tarball,BitBake expects to find the extracted files in a directory named <application>-<version>. This is controlled by the S variable.
+
+If the tarball follows the above format, then you need not define S variable
+
+Eg. SRC_URI = "https://busybox.net/downloads/busybox-${PV}.tar.bz2;name=tarball
+
+If the directory has another name, you must explicitly define S
+
+If you are fetching from SCM like git or SVN, or your file is local to your machine, you need to define S
+
+If the scheme is git, S = ${WORKDIR}/git
+
+
+Stage 3: Patching Code (do_patch)
+---------------------------------
+
+Sometimes it is necessary to patch code after it has been fetched.
+
+Any files mentioned in SRC_URI whose names end in .patch or .diff or compressed versions of these suffixes (e.g. diff.gz) are treated as patches
+
+The do_patch task automatically applies these patches.
+
+The build system should be able to apply patches with the "-p1" option (i.e. one directory level in the path will be stripped off).
+
+If your patch needs to have more directory levels stripped off, specify the number of levels using the "striplevel" option in the SRC_URI entry for the patch
+
+
+Licensing
+----------------
+
+Your recipe needs to have both the LICENSE and LIC_FILES_CHKSUM variables:
+
+LICENSE:
+---------
+
+	This variable specifies the license for the software.
+
+	 If you do not know the license under which the software you are building is distributed, you should go to the source code and look for that information. 
+
+	Typical files containing this information include COPYING, LICENSE, and README files. 
+
+	You could also find the information near the top of a source file. 
+
+For example, given a piece of software licensed under the GNU General Public License version 2, you would set LICENSE as follows:
+
+LICENSE = "GPLv2"
+
+For standard licenses, use the names of the files in meta/files/common-licenses/
+
+LIC_FILES_CHKSUM:
+-----------------
+
+The OpenEmbedded build system uses this variable to make sure the license text has not changed.
+
+If it has, the build produces an error and it affords you the chance to figure it out and correct the problem.
+
+Example that assumes the software has a COPYING file:
+
+LIC_FILES_CHKSUM = "file://COPYING;md5=xxx"
+
+
+
+
+Stage 4: Configuration (do_configure)
+------------------------------------
+
+Most software provides some means of setting build-time configuration options before compilation
+
+Typically, setting these options is accomplished by running a configure script with options, or by modifying a build configuration file
+
+Autotools: If your source files have a configure.ac file, then your software is built using Autotools. 
+
+CMake: If your source files have a CMakeLists.txt file, then your software is built using CMake
+
+If your source files do not have a configure.ac or CMakeLists.txt file,you normally need to provide a do_configure task in your recipe unless there is nothing to configure.
+
+
+
+
+Stage 5: Compilation (do_compile)
+---------------------------------
+
+do_compile task happens after source is fetched, unpacked, and configured.
+
+
+
+Stage 6: Installation (do_install)
+------------------------------------
+
+After compilation completes, BitBake executes the do_install task
+
+During do_install, the task copies the built files along with their hierarchy to locations that would mirror their locations on the target device.
+
+
+
+Stage 7: Packaging (do_package)
+--------------------------------
+
+The do_package task splits the files produced by the recipe into logical components.
+
+Even software that produces a single binary might still have debug symbols, documentation, and other logical components that should be split out.
+
+The do_package task ensures that files are split up and packaged correctly.
+
+
+
+
+======================================================================================================
+
+Step 1: Create a file userprog.c with the following content:
+
+#include <stdio.h>
+
+int main()
+{
+	printf("Hello World\n");
+	return 0;
+}
+
+Step 2: Create a folder in the layer recipes-example 'myhello'
+	mkdir -p recipes-examples/myhello
+
+Step 3: Create 'files' folder inside the 'myhello' folder and copy userprog.c inside this folder
+	mkdir -p recipes-examples/myhello/files
+	Copy the userprog.c into the above location
+
+Step 4: Create a file called 'myhello_0.1.bb' with the following content:
+
+	DESCRIPTION = "Simple helloworld application"
+	LICENSE = "MIT"
+	LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
+
+	SRC_URI = "file://userprog.c"
+
+	S = "${WORKDIR}"
+
+	do_compile() {
+		${CC} userprog.c ${LDFLAGS} -o userprog
+	}	
+
+	do_install() {
+		install -d ${D}${bindir}
+		install -m 0755 userprog ${D}${bindir}
+	}
+
+Step 5: bitbake myhello
+
+
+
+
+install keyword
+-----------------
+
+install not only copies files but also changes its ownership and permissions and optionally removes debugging symbols from executables.
+
+It combines cp with chown, chmod and strip
+
+
+
+WORKDIR
+--------------
+
+The location of the work directory in which the OpenEmbedded build system builds a recipe.
+
+This directory is located within the TMPDIR directory structure and is specific to the recipe being built and the system for which it is being built.
+
+The WORKDIR directory is defined as follows:
+
+${TMPDIR}/work/${MULTIMACH_TARGET_SYS}/${PN}/${EXTENDPE}${PV}-${PR}
+
+TMPDIR: The top-level build output directory
+MULTIMACH_TARGET_SYS: The target system identifier
+PN: The recipe name
+EXTENDPE: Mostly blank
+PV: The recipe version
+PR: The recipe revision
+
+
+
+OpenEmbedded Variables
+----------------------
+
+S : Contains the unpacked source files for a given recipe
+
+D : The destination directory (root directory of where the files are installed, before creating the image)
+
+WORKDIR: The location where the OpenEmbedded build system builds a recipe (i.e. does the work to create the package).
+
+PN : The name of the recipe used to build the package
+
+PV : The version of the recipe used to build the package
+
+PR : The revision of the recipe used to build the package.
+
+
+
+Recipe Explanation
+-----------------------
+The most relevant tasks that will be executed when calling bitbake myhello are the following:
+
+$ bitbake -c cleanall myhello
+
+1. do_fetch: 
+	in this case, since the specified SRC_URI variable points to a local file, BitBake will simply copy the file in the recipe WORKDIR. 
+	This is why the S environment variable (which represents the source code location) is set to WORKDIR.
+
+$ bitbake -c fetch myhello
+$ bitbake -c unpack myhello
+$ bitbake -c configure myhello
+	
+What is sysroot?
+---------------
+contain needed headers and libraries for generating binaries that run on the target architecture
+
+recipe-sysroot-native:
+	includes the build dependencies used in the host system during the build process.
+	It is critical to the cross-compilation process because it encompasses the compiler, linker, build script tools, and more,
+
+recipe-sysroot:
+	the libraries and headers used in the target code
+
+2. do_compile: 
+	when executing this task, BB will invoke the C cross-compiler for compiling the myhello.c source file. 
+	The results of the compilation will be in the folder pointed by the B environment variable (that, in most of the cases, is the same as the S folder).
+
+3. do_install: 
+	this task specifies where the helloworld binary should be installed into the rootfs. 
+	It must be noticed that this installation will only happen within a temporary rootfs folder within the recipe WORKDIR (pointed by the variable D)
+
+	image: This contains the files installed by the recipe (pointed to D variable).
+
+4. do_package: 
+	in this phase the file installed in the directory D will be packaged in a package named myhello. 
+	This package will be used later from BitBake when eventually building a rootfs image containing the helloworld recipe package
+
+	packages: The extracted contents of packages are stored here
+	packages-split: The contents of packages, extracted and split, are stored here. This has a sub-directory for each package
+
+
+
+Add the recipe to rootfs
+
+IMAGE_INSTALL += "myhello"
+
+
+Who defines the fetch, configure and other tasks 
+-------------------------------------------------
+
+When bitbake is run to build a recipe, base.bbclass file gets inherited automatically by any recipe
+
+You can find it in classes/base.bbclass
+
+This class contains definitions for standard basic tasks such as fetching, unpacking, configuring (empty by default), compiling (runs any Makefile present), installing (empty by default) and packaging (empty by default)
+
+These classes are often overridden or extended by other classes such as the autotools class or the package class.
+
+
+
+-------------------------------------------------------------------------
+LOGS
+-------------------------------------------------------------------------
+Where do I find build logs?
+-----------------------------
+
+Every build produces lots of log output for diagnostics and error chasing
+
+Output of bitbake gets logged to tmp/log/cooker/<machine>/
+
+$  cat tmp/log/cooker/<machine>/<timestamp>.log  | grep 'NOTE:.*task.*Started'
+
+
+Where do I find build logs?
+-----------------------------
+
+For each individual recipe, there is a "temp" directory under the work directory
+
+Within the build system this directory is pointed to by the T variable, so if you need to you can find it by using bitbake -e
+
+$ bitbake -e <recipename> | grep ^T=
+
+Each task that runs for a recipe produces "log" and "run" files in ${WORKDIR}/temp
+
+You can find log files for each task in the recipe's temp directory
+
+Log files are named log.taskname (e.g. log.do_configure, log.do_fetch, and log.do_compile)
+
+For convenience, symbolic links are kept updated by BitBake, pointing to the last log files using the pattern log.<task>
+
+We can run the scripts for every task with the pattern run.<task>.<pid> 
+
+These files contain the commands which produce the build results
+
+
+Logging Information during task execution
+-------------------------------------------
+
+The logging utilities provided by BitBake are very useful to trace the code execution path.
+
+BitBake provides logging functions for use in Python and Shell Script code, as described
+
+Python: For use within Python functions, BitBake supports several log levels, which are bb.fatal, bb.error, bb.warn, bb.note, bb.plain, and bb.debug
+
+Shell Script: For use in Shell Script functions, the same set of log levels exists and is accessed with a similar syntax: bbfatal, bberror, bbwarn, bbnote, bbplain, and bbdebug
+
+There is one subtle difference between the use of the logging functions in Python and Shell Scripting.
+
+The logging functions in Python are directly handled by BitBake, seen on the console, and stored in the execution log that can be seen inside build/tmp/log/cooker/<machine>
+
+When the logging functions are used in Shell Script, the information is outputted on the task's respective task log file, which is available in build/tmp/work/<arch>/<recipe name>/<software version>/temp
+
+
+Logging
+-----------
+
+bb.fatal and bbfatal: These have the highest priority of logging messages as they print the message and terminate the processing. They cause the build to be interrupted.
+
+bb.error and bberror: They are used to display an error but do not force the build to stop.
+
+bb.warn and bbwarn: They are used to warn users about something.
+
+bb.note and bbnote: These add a note to the user. They are only informative.
+
+bb.plain and bbplain: These output a message.
+
+bb.debug and bbdebug: These add debugging information that is shown depending on the debug level used.
+
+
+
+do_compile() {
+ bbplain "*************************************"
+ bbplain "* *"
+ bbplain "* Example recipe created by bitbake-layers *"
+ bbplain "* *"
+ bbplain "*************************************"
+
+
+
+Debug Output
+------------
+
+You can see the debug output from Bitbake by using the -D option
+
+The debug output gives more information about what BitBake is doing and the reason behind it
+
+Each -D option you use increases the logging level.
+
+The most common usage is -DDD
+
+
+oe_runmake
+-----------------
+
+The default behavior of do_compile task is to run the oe_runmake function if a makefile(Makefile, makefile or GNUMakefile) is found. If no such file is found, the do_compile tasks does nothing
+
+The default behavior of do_configure task is to run oe_runmake clean if a makefile (Makefile, makefile, or GNUmakefile) is found
+
+oe_runmake vs make
+---------------------
+
+oe_runmake function is used to run make.
+
+oe_runmake
+	passes EXTRA_OEMAKE settings to make
+
+	displays the make command
+
+	checks for errors generated via the call.
+
+In OE environment you should not call make directly rather use oe_runmake when you need to run make.
+
+oe_runmake is one of many helper functions defined by the base class
+
+Try: check the definition of oe_runmake in base.bbclass
+	
+
+EXTRA_OEMAKE
+----------------
+
+If you need additional make options, you should store them in the EXTRA_OEMAKE variable
+
+
+
+What if i have a Makefile which don't have clean target?
+-----------------------------------------------------------
+
+CLEANBROKEN = "1"
+
+If set to "1" within a recipe, CLEANBROKEN specifies that the make clean command does not work for the software being built.
+
+Consequently, the OpenEmbedded build system will not try to run make clean during the do_configure task, which is the default behavior.
+
+
+
+======================================================================================================
+
+Write a recipe for git remote repository
+----------------------------------------
+
+Yocto supports the ability to pull code from online git repositories as part of the build process.
+
+Step 1: Set SRC_URI
+
+SRC_URI = "git://<URL>;protocol=https"
+
+Step 2: Set S environmental variable
+
+S = ${WORKDIR}/git
+
+Step 3: Set SRCREV environmental variable 
+
+What is the use of SRCREV?
+--------------------------
+
+When fetching a repository, bitbake uses SRCREV variable to determine the specific revision from which to build
+
+There are two options to this variable:
+---------------------------------------
+
+1) AUTOREV:
+
+SRCREV = "${AUTOREV}"
+
+When SRCREV is set to the value of this variable, it specifies to use the latest source revision in the repository
+
+The build system accesses the network in an attempt to determine the latest version of software from the SCM
+
+2) A specific revision (SHA1 hash when fetching from git)
+
+If you want to build a fixed revision and you want to avoid performing a query on the remote repository every time BitBake parses your recipe
+
+SRCREV = "d6918c8832793b4205ed3bfede78c2f915c23385"
+
+
+Specifying a different branch
+------------------------------
+
+You can specify the branch using the following form:
+
+SRC_URI = "git://server.name/repository;branch=branchname"
+
+If you do not specify a branch, BitBake looks in the default "master" branch.
+
+BitBake will now validate the SRCREV value against the branch.
+
+
+Fetch from a local git source
+----------------------------
+
+git fetcher supports protocol parameter
+
+protocol
+---------------
+
+The protocol used to fetch the files.
+
+The default is "git" when a hostname is set. If a hostname is not set, the Git protocol is "file"
+
+SRC_URI = "git:///home/user/git/myTest/;protocol=file"
+
+
+What about private repositories? 
+--------------------------------
+
+Private repositories have the added complexity of requiring authentication before you can download (a.k.a clone) them. 
+
+Luckily, Yocto supports the ssh protocol.
+
+To make Yocto use a GitHub repository:
+
+SRC_URI="git://git@github.com/group_name/repo_name.git;protocol=ssh"
+
+To use SSH, you must generate an SSH keypair on your computer and add the public key to your GitHub account
+
+
+How to pass a tag to a git recipe
+----------------------------------
+
+tag parameter of git fetcher
+------------------------------
+
+"tag": Specifies a tag to use for the checkout. To correctly resolve tags, BitBake must access the network
+
+SRCREV is not needed in this case
+
+
+Patching the source for a recipe
+---------------------------------
+
+Advantage of Yocto is that everything is build from source
+
+It's fairly easy to make changes to anything that gets built
+
+As part of building a recipe, OE creates a tmp/work/<architecture>/<recipe>/<version> directory, known as the "work directory". 
+
+This is where all of the work done to build a recipe takes place.
+
+A subdirectory contains the source of the recipe named <recipename>-<version> or "git" (depending on how the fetched source is provided)
+
+The temptation is to simply make changes here and then recompile, but there are several reasons why that's not a good idea:
+
+1.You can easily lose your changes if you're not careful e.g. running bitbake -c clean will wipe the directory out
+
+2. You have to force compilation as the build system doesn't know that you've made any changes
+
+bitbake -c compile <recipe> -f
+
+
+
+Patches
+---------------
+
+Patches can be easily created using Git
+
+If you download the third-party source code as a Git repository, this is definitely the easiest solution
+
+After downloading the repository, make the required changes to the code, and add these changes to the repository as a new commit
+
+You can then tell Git to make a patch file.
+
+If all the changes are contained within a single additional commit, you can use the following command:
+
+~$ git show HEAD > my-patch.patch
+
+These generated patches should be bundled with your recipe files.
+
+Patches should always be in a sub-directory of where the recipe lives.
+
+Yocto will automatically apply these patches when it needs to build your recipe.
+
+======================================================================================================
+
+Splitting Files
+----------------
+
+The do_package task splits the files produced by the recipe during do_install into logical components.
+
+Even software that produces a single binary might still have
+	debug symbols
+	documentation and
+	other logical components that should be split out
+
+This separation exists because not all of those installed files are useful in every image
+
+For example, you probably do not need any of the documentation installed in a production image
+
+The do_package task ensures that files are split up and packaged correctly.
+
+The PACKAGES and FILES variables controls splitting
+
+PACKAGES	lists all of the packages to be produced
+
+FILES		specifies which files to include in each package by using an override to specify the package
+
+
+
+PACKAGES
+-----------
+
+PACKAGES        -       The list of packages the recipe creates
+
+The default value:	${PN}-dbg ${PN}-staticdev ${PN}-dev ${PN}-doc ${PN}-locale ${PACKAGE_BEFORE_PN} ${PN}
+
+FILES		-	The list of files and directories that are placed in a package
+
+To use the FILES variable, provide a package name override that identifies the resulting package
+
+Eg. FILES_${PN} specifies the files to go into the main package
+
+Then, provide a space-separated list of files or paths that identify the files you want included as part of the resulting package
+
+Eg. FILES_${PN} += "${bindir}/mydir1 ${bindir}/mydir2/myfile"
+
+Good Practice : use ${sysconfdir} rather than /etc or ${bindir} rather than /usr/bin
+
+List of the variables can be found in meta/conf/bitbake.conf
+
+What are the default values of various FILES_* variables?
+---------------------------------------------------------
+
+Consequently, you might find you do not even need to set these variables in your recipe unless the software the recipe is building installs files into non-standard locations.
+
+The PACKAGES and FILES_* variables in the meta/conf/bitbake.conf configuration file define how files installed by the do_install task are packaged
+
+
+
+Add a ReadMe.txt file and check what happens
+
+
+Important Point
+------------------
+
+For each installed file, the first package whose FILES value matches the file is the package into which the file goes.
+
+If a file matches the FILES variable for more than one package in PACKAGES, it will be assigned to the earliest (leftmost) package.
+
+
+FILES_${PN}-dbg += "${bindir}/userprog"
+FILES_${PN} += "${bindir}/userprog"
+
+
+Files/directories were installed but not shipped in any package [installed-vs-shipped]
+--------------------------------------------------------------------------------------
+
+Files have been installed within the do_install task but have not been included in any package by way of the FILES variable.
+
+Files that do not appear in any package cannot be present in an image later on in the build process
+
+You need to do one of the following:
+
+        Add the files to FILES for the package you want them to appear in (e.g. FILES_${PN} for the main package).
+
+        Delete the files at the end of the do_install task if the files are not needed in any package.
+
+
+Create your PACKAGE and add a file into the PACKAGE
+
+
+
+-----------------------------------------------------------------------------------------------------
+======================================================================
+Create Static Library
+======================================================================
+A static library is basically a set of object files that were copied into a single file with the suffix .a.
+
+The basic tool used to create static libraries is a program called ar (archiver).
+
+This program can be used to
+        create static libraries (also known as archive files),
+        modify object files in the static library,
+        list the names of object files in the library, etc.
+
+In order to create a static library, we have to perform two steps:
+
+        1.Create the object files from the source files of the project
+
+        2. Create the static library (the archive file) from the object files
+
+---------------------------------------------------
+mylib.h
+----------------------------------
+#ifndef __LIB_H
+#define __LIB_H
+
+int add(int quant1, int quant2);
+int sub(int quant1, int quant2);
+int mul(int quant1, int quant2);
+int div(int quant1, int quant2);
+void print(char *string, int times);
+
+#endif
+
+----------------------------------
+arith.c
+
+
+#include "mylib.h"
+
+int add(int quant1, int quant2)
+{
+	return(quant1 + quant2);
+}
+
+int div(int quant1, int quant2)
+{
+	return(quant1 / quant2);
+}
+
+int mul(int quant1, int quant2)
+{
+	return(quant1 * quant2);
+}
+
+int sub(int quant1, int quant2)
+{
+	return(quant1 - quant2);
+}
+----------------------------------
+print.c
+
+#include <stdio.h>
+#include "mylib.h"
+
+void print(char *str, int times)
+{
+	while (times--)
+	{
+		printf("%s", str);
+	}
+}
+
+---------------------------------------------------
+Create object Files
+=======================
+$gcc -c arith.c 
+
+$gcc -c print.c 
+
+Create Static library
+======================
+
+$ar rcs liblwl.a arith.o print.o
+
+c -- create the archive if it doesn't exist
+
+r -- replace the older object files in the library, with the new object files
+
+s -- Write an object-file index into the archive
+
+        This index is later will be used by the compiler to speed up symbol-lookup inside the library
+
+Linking static library into application
+==========================================
+
+$ gcc userprog.c -o userprog -llwl -L.
+
+
+The -L flag indicates (a non standard) directory where the libraries can be found, else you can copy this in standard location (/usr/lib)
+
+The -l flag indicates the name of the library
+Note the -larith will be converted to libarith.a by the compiler
+
+
+Write a Static Library Recipe
+--------------------------------
+
+Name of the Recipe: mystatic
+
+File Location:
+----------------
+
+.a 	->	${libdir}
+
+.h	-> 	${includedir}
+
+ALLOW_EMPTY
+-------------
+
+By default, BitBake does not produce empty packages
+
+This default behavior can cause issues when there is an RDEPENDS or some other hard runtime requirement on the existence of the package
+
+ALLOW_EMPTY variable Specifies whether to produce an output package even if it is empty.
+
+Ex:
+
+ALLOW_EMPTY_${PN} = "1"
+ALLOW_EMPTY_${PN}-dev = "1"
+ALLOW_EMPTY_${PN}-staticdev = "1"
+
+
+======================================================================
+Create Dynamic Library
+======================================================================
+
+userprog.c
+
+#include <stdio.h>
+#include "mylib.h"
+
+int main()
+{
+	print("Hello World\n", 5);
+	return 0;
+}
+
+
+
+
+How to create the dynamic library
+===================================
+
+Step1: Create object files using the below command
+
+        $ gcc -fPIC -c *.c
+
+the -fPIC flag stands for Position Independent Code, a characteristic required by shared libraries
+
+Step2: Create the library
+
+        $ gcc -shared -Wl,-soname,liblwl.so.1 -o liblwl.so.1.0 *.o
+
+The -shared key tells the compiler to produce a shared object which can then be linked with other objects to form an executable.
+
+-Wl flag passes an options to linker with following format -Wl,options
+        in case of our example it sets the name of library, as it will be passed to the linker.
+
+
+Use the dynamic library
+=============================
+$ cd app
+$ gcc main.c -o main -I.. -larith -L..
+
+
+
+
+Shared Library Names
+=======================
+
+Dynamic libraries follow certain naming conventions on running systems so that multiple versions can co-exist
+
+Linux shared library can have three names. Which are:
+
+	Linker name (eg: libexample.so)
+	Soname (eg : libexample.so.1.2)
+	Real Name (eg : libexample.so.1.2.3)
+
+Linker Name
+==============
+
+Linker Name is the name that is requested by the linker when another code is linked with your library (with –lexample linker option). 
+
+Linker name typically starts with
+	the prefix lib
+	name of the library
+	the phrase .so
+
+soname
+=============
+
+Every shared library has a special name called the ``soname''.
+
+The soname has 
+	the prefix ``lib'', 
+	the name of the library, 
+	the phrase ``.so'', 
+	followed by a period 
+	and a version number that is incremented whenever the interface changes 
+
+Eg. liblwl.so.1
+
+Real Name
+=============
+
+Real Name is the actual name of the shared library file. 
+
+Real Name = soname + minor version number
+
+Eg. liblwl.so.1.0
+
+It can also be liblwl.so.1.0.1.3
+
+During shared library installation
+=====================================
+
+soname is a symbolic link to the real name
+
+linker name is a symbolic link to the soname
+
+In this way both soname and linker names ultimately point to the real name of the library (i.e. actual library file).
+
+Command to read the soname
+============================
+$ readelf -d liblwl.so
+
+
+Write a Dynamic Library Recipe
+--------------------------------
+
+Name of the Recipe: mydynamic
+
+File Location:
+----------------
+
+.so 	->	${libdir}
+
+.h	-> 	${includedir}
+
+
+
+Why is liblwl.so not present in the image
+-------------------------------------------
+
+The unversioned symbolic link is only used at development time.
+
+
+Packaging Unversioned Libraries
+--------------------------------
+
+When shared libraries are built, they should be versioned but sometimes this is not done
+
+Some library vendors do not release source code for their software but do release pre-built binaries.
+
+You will get error when you add unversioned libraries.
+
+Because versioned libraries are far more common than unversioned libraries, the default packaging rules assume versioned libraries
+
+
+PACKAGING Unversioned Libraries
+-----------------------------------
+
+It follows that packaging an unversioned library requires a bit of work in the recipe.
+
+By default, "liblwl.so" gets packaged into ${PN}-dev, which triggers a QA warning that a non-symlink library is in a -dev package
+
+To solve this problem, you need to package the unversioned library into ${PN} where it belongs.
+
+Following are the abridged default FILES variables in bitbake.conf
+
+SOLIBS = ".so.*"
+SOLIBSDEV = ".so"
+FILES_${PN} = "... ${libdir}/lib*${SOLIBS} ..."
+FILES_SOLIBSDEV ?= "... ${libdir}/lib*${SOLIBSDEV} ..."
+FILES_${PN}-dev = "... ${FILES_SOLIBSDEV} ..."
+
+SOLIBS defines a pattern that matches real shared object libraries.
+SOLIBSDEV matches the development form (unversioned symlink).
+
+These two variables are then used in FILES_${PN} and FILES_${PN}-dev
+
+which puts the real libraries into ${PN} and the unversioned symbolic link into PN-dev.
+
+To package unversioned libraries, you need to modify the variables in the recipe as follows:
+
+SOLIBS = ".so"
+FILES_SOLIBSDEV = ""
+
+The modifications cause .so to be the real library and unsets FILES_SOLIBSDEV so that no libraries get packaged into PN-dev.
+
+
+
+
+Dependencies
+---------------
+
+Most software packages have a short list of other packages that they require, which are called dependencies
+
+make menuconfig need ncurses library
+
+These dependencies fall into two main categories
+
+        build-time dependencies: required when the software is built
+
+        runtime dependencies: which are required to be installed on the target in order for the software to execute
+
+Examples
+----------
+
+Build Time Dependencies: 
+
+	Your software uses a particular library. For example pthread/openssl. 
+	Application cannot build without pthread/openssl library
+
+Run Time Dependencies:
+
+	If your software internally calls a particular command for example (lspci)
+
+	If your software uses run time loading of dynamic library (dlopen)
+
+	Application/Software can build, but need them during execution
+
+
+
+Yocto Variables
+------------------
+
+There are two variables provided by Yocto to allow the specifications of dependencies
+
+DEPENDS
+
+	Specifies build-time dependencies, via a list of bitbake recipes to build prior to build the recipe
+
+RDEPENDS
+
+	Specifies run-time dependencies, via a list of packages to install prior to installing the current package
+
+
+DEPENDS
+-----------
+
+Within a recipe, you can specify build time dependencies using DEPENDS variable
+
+It is important that you specify all build-time dependencies explicitly.
+
+When a recipe 'A' is DEPENDS on recipe 'B'. In this case, Bitbake first builds recipe 'B' and then recipe 'A'
+
+Example: Adding recipe1 to recipe2 as build dependency
+
+DEPENDS = "recipe1"
+
+The line above means that before the do_configure task of recipe2 can be run, the task do_populate_sysroot from recipe1 will have completed
+
+do_populate_sysroot
+--------------------
+
+Copies a subset of files installed by the do_install task into the appropriate sysroot
+
+Check the log of do_populate_sysroot in recipe2
+
+sysroot-destdir/: Contains a subset of files installed within do_install that have been put into the shared sysroot.
+
+
+Sharing Files Between Recipes
+------------------------------
+
+Recipes often need to use files provided by other recipes on the build host.
+
+For example, an application linking to a common library needs access to the library itself and its associated headers
+
+The way this access is accomplished is through the sysroot.
+
+One sysroot exists per "machine": 
+
+	a sysroot exists for the target machine
+
+	a sysroot exists for the build host.
+
+Subset of files installed into standard locations during the do_install task within the ${D} directory automatically goes into the sysroot.
+
+do_prepare_recipe_sysroot
+--------------------------
+
+This task sets up the two sysroots in ${WORKDIR} (i.e. recipe-sysroot and recipe-sysroot-native) 
+
+
+
+RDEPENDS
+-------------
+
+Within a recipe, run time dependencies can be specified using RDEPENDS variable
+
+If your recipe says that T RDEPENDS on P, that tells bitbake that it must deploy P to the target system if it deploys T, because T can't be used without P
+
+Difference between DEPENDS and RDEPENDS
+-----------------------------------------
+
+DEPENDS List of the recipe build-time dependencies
+
+RDEPENDS List of the package runtime dependencies. Must be package specific (e.g. with _${PN})
+
+RDEPENDS_${PN} = "package_name"
+
+If T RDEPENDS on P then T's do_build task is made to depend on P's do_package_write task
+
+
+
+Write a recipe for a C Program which uses lspci system call
+----------------------------------------
+lspci is provided by pciutils recipe
+
+Check what happens when you write
+
+RDEPENDS = "pciutils"
+
+Remove the ALLOW_EMPTY in mystatic recipe and resolve the error
+
+#include <stdio.h>
+int main()
+{
+	printf("Hello World\n");
+	system("lspci");
+	return 0;
+}
+
+
+
+Dependency on a specific version
+---------------------------------
+
+Sometimes a recipe have dependencies on specific versions of another recipe.
+
+BitBake allows to reflect this by using:
+
+DEPENDS = "recipe-b (>= 1.2)"
+RDEPENDS_${PN} = "recipe-b (>= 1.2)"
+
+The following operators are supported: =, >, <, >= and <=.
+
+
+
+Recipe Dependency Information
+-------------------------------
+
+Dependency information can help you understand why a recipe is built.
+
+To generate dependency information for a recipe, run the following command:
+
+$ bitbake -g recipename
+
+This command writes the following files in the current directory:
+
+pn-buildlist
+==============
+
+	A list of recipes/targets involved in building recipename. 
+
+	 "Involved" here means that at least one task from the recipe needs to run when building recipename from scratch
+
+task-depends.dot
+==================
+
+	A graph showing dependencies between tasks.
+
+The graphs are in DOT format and can be converted to images (e.g. using the dot tool from Graphviz).
+
+
+
+DOT Format
+----------------
+
+The DOT format is a text description language for graphics that is understood by the GraphViz open source package and all utilities that use it
+
+$ dot -Tpdf task-depends.dot -o outfile.pdf
+
+$ evince outfile.pdf
+
+The most useful way to display dependency data is to ask Bitbake to display it graphically with the dependency explorer, as follows:
+
+bitbake -g -u taskexp recipename
+
+This command displays a GUI window from which you can view build-time and runtime dependencies for the recipes involved in building recipename
+
+
+
+noexec
+--------
+
+When set to "1", marks the task as being empty, with no execution required.
+
+Eg: do_configure[noexec] = "1"
+    do_compile[noexec] = "1"
+
+This can be used to disable tasks which are defined elsewhere for example in a class that are not needed in a particular recipe
+
+
+======================================================================================================
+Makefiles Problems
+-------------------
+
+Make allows people to generate executables easily based on source code.
+
+Advantage: 
+
+	allows for faster builds
+	keeps track of source files that haven’t changed since last time a build was run
+	skips unnecessary steps
+
+Disadvantage:
+
+	Difficult to make a software program portable
+	If you need to build the same program on a different platform, Makefile needs to be tweaked to work on that platform
+	the C compiler differs from system to system
+	certain library functions are missing on some systems; 
+	header files may have different names
+
+One way to handle this is to write conditional code, with code blocks selected by means of preprocessor directives (#ifdef)
+	but because of the wide variety of build environments this approach quickly becomes unmanageable
+	Autotools is designed to address this problem more manageably.
+
+
+Autotools
+-----------
+
+GNU autotools family is a collection of utilities designed to assist application and library developers in making their source code portable across a variety of many unix like systems.
+
+It can be used both for 
+	building native programs on the build machine and 
+	also for cross-compiling to other architectures.
+
+
+Autotools is frequently the brains behind the typical
+
+$./configure
+$make
+$make install
+
+It is made up of many tools
+Primary tools:
+
+	automake
+	autoconf
+	make
+
+GNU projects require a minimum set of files to be included with project:
+	README, INSTALL, COPYING, THANKS, NEWS, AUTHORS and ChangeLog
+
+The autotools will generate starting versions of some of these files for you
+
+
+Autotools
+-----------
+
+GNU autotools family is a collection of utilities designed to assist application and library developers in making their source code portable across a variety of many unix like systems.
+
+It can be used both for 
+	building native programs on the build machine and 
+	also for cross-compiling to other architectures.
+
+
+Autotools is frequently the brains behind the typical
+
+$./configure
+$make
+$make install
+
+It is made up of many tools
+Primary tools:
+
+	automake
+	autoconf
+	make
+
+GNU projects require a minimum set of files to be included with project:
+	README, INSTALL, COPYING, THANKS, NEWS, AUTHORS and ChangeLog
+
+The autotools will generate starting versions of some of these files for you
+
+
+
+Hello World of Autotools
+------------------------
+
+Step1 : Create a file called configure.ac
+
+This file is read by both autoconf (to create configure) and automake (to create the various Makefile.in)
+
+It contains a series of M4 macros that will be expanded as shell code to finally form the configure script
+
+The macros prefixed with AC_ are Autoconf macros,
+
+The macros that start with AM_ are Automake macros
+
+Basic configure.ac file
+-------------------------
+AC_INIT([myhello], [1.0], [linuxweekendlearning@gmail.com])
+AM_INIT_AUTOMAKE
+AC_OUTPUT
+
+AC_INIT:
+Every configure script must call AC_INIT before doing anything else that produces output.
+
+Prototype: AC_INIT (package, version, [bug-report], [tarname], [url])
+
+AC_INIT takes in as parameters
+	name of the package
+	its version number and
+	a contact address for bug-reports about the package
+
+You can check this address by running ./configure --help
+
+AM_INIT_AUTOMAKE
+	Initializes automake for this project
+
+AC_OUTPUT: 
+	Every configure.ac, should finish by calling AC_OUTPUT.
+
+Command:
+------------
+
+Now we’ve written our config files, we can run autotools and generate the finished configure script and Makefile.in template.
+
+First, we need to generate an m4 environment for autotools to use:
+
+$aclocal
+
+Now we can run autoconf to turn our configure.ac into a configure script, and automake to turn our Makefile.am into a Makefile.in:
+
+$ autoconf
+$ automake --add-missing
+
+or
+
+$ autoreconf --install
+
+autoconf generates the configure script from various input files, some of which are created using other tools like aclocal, automake, etc
+
+autoreconf is a helper that knows how to call all these tools in the right order
+
+aclocal # Set up an m4 environment
+autoconf # Generate configure from configure.ac
+automake --add-missing # Generate Makefile.in from Makefile.am
+./configure # Generate Makefile from Makefile.in
+
+
+
+
+Hello World autotools
+---------------------
+Next, we need to tell autoconf about the dependencies our configure script needs to look for
+In this case, the configure script only needs to look for a C compiler.
+
+configure.ac
+----------------
+AC_PROG_CC
+AC_CONFIG_FILES([
+ Makefile
+])
+
+
+The AC_PROG_CC line causes the configure script to search for a C compiler and define the variable CC with its name
+
+If there were other dependencies, then we’d use other m4 macros here to discover them;
+
+Makefile.am file
+-------------------
+
+Makefile.am contain Automake instructions
+
+Our configure script will expect a Makefile.in file that it can substitute all of those system-specific variables into
+
+Makefile.in template is very long and complex. 
+
+So instead of writing it by hand, we write a shorter Makefile.am file, which automake will use to generated the Makefile.in for us
+
+bin_PROGRAMS = myhello
+myhello_SOURCES = userprog.c
+
+
+bin_PROGRAMS = myhello
+----------------------
+
+The PROGRAMS suffix is called a primary
+The bin prefix tells automake that the file listed here should be installed to the directory defined by the variable bindir.
+
+myhello_SOURCES = userprog.c
+-----------------------------
+Since we’ve defined a PROGRAM, we need to tell automake where to find its source files
+In this case, the prefix is the name of the program these source files build
+
+
+
+
+Generate a tarball
+------------------
+
+Makefile contains all kinds of interesting targets, including one to build a tarball of the project containing all of the files we need to distribute
+
+./configure
+make dist
+
+Install on the target
+---------------------
+
+$ make install
+
+Uninstall
+-------------
+
+$ make uninstall
+
+
+GNU Project Example
+---------------------
+
+GNU Hello is an almost-trivial free software program that prints the phrase "Hello, world!" or a translation thereof to the screen.
+
+It can print the message in different formats, or print a custom message
+
+The primary purpose of the program is to serve as an example of the GNU coding standards
+
+Download the latest version of Hello World program from https://ftp.gnu.org/gnu/hello/
+
+$ tar  -xzvf  hello-*
+
+$ ./configure
+
+$ make
+
+$ make install
+
+$ man hello
+
+$ make uninstall
+
+
+
+Recipe for autotools package
+-----------------------------
+
+Applications that use Autotools such as autoconf and automake require
+
+	a recipe that has a source archive listed in SRC_URI
+
+	also inherit the autotools class
+
+autotools class takes care of most of the complexity of building an autotools based packages
+
+The autotools class will take care of generating the require configure, compile and install tasks
+
+SUMMARY = "GNU Helloworld application"
+LICENSE = "GPLv3+"
+LIC_FILES_CHKSUM = "file://COPYING;md5=751419260aa954499f7abaabaa882bbe"
+
+SRC_URI = "${GNU_MIRROR}/hello/hello-${PV}.tar.gz"
+
+inherit autotools
+
+
+autotools vs autotools-brokensep
+----------------------------------
+
+If the software being built by a recipe does not support using out-of-tree builds, you should have the recipe inherit the autotools-brokensep class. 
+
+out-of-tree build
+-----------------
+
+The autotools class has been changed to use a directory for building (B), which is separate from the source directory (S).
+
+This is commonly referred to as B != S, or an out-of-tree build.
+
+If the software being built is already capable of building in a directory separate from the source, you do not need to do anything.
+
+However, if the software is not capable of being built in this manner, you need to inherit autotools-brokensep instead of autotools class
+
+
+md5sum and sha256sum
+---------------------
+
+If your SRC_URI statement includes URLs pointing to individual files fetched from a remote server other than a version control system
+
+BitBake attempts to verify the files against checksums defined in your recipe to ensure they have not been tampered with or otherwise modified since the recipe was written
+
+Two checksums are used: SRC_URI[md5sum] and SRC_URI[sha256sum]
+
+If your SRC_URI variable points to more than a single URL (excluding SCM URLs), you need to provide the md5 and sha256 checksums for each URL
+
+Eg.
+
+SRC_URI = "${DEBIAN_MIRROR}/main/a/apmd/apmd_3.2.2.orig.tar.gz;name=tarball \
+	   ${DEBIAN_MIRROR}/main/a/apmd/apmd_${PV}.diff.gz;name=patch"
+
+	   SRC_URI[tarball.md5sum] = "b1e6309e8331e0f4e6efd311c2d97fa8"
+	   SRC_URI[tarball.sha256sum] = "7f7d9f60b7766b852881d40b8ff91d8e39fccb0d1d913102a5c75a2dbb52332d"
+
+	   SRC_URI[patch.md5sum] = "57e1b689264ea80f78353519eece0c92"
+	   SRC_URI[patch.sha256sum] = "7905ff96be93d725544d0040e425c42f9c05580db3c272f11cff75b9aa89d430"
+
+
+autotools bbclass
+----------------------
+
+It's useful to have some idea of how the tasks defined by the autotools* classes work 
+
+do_configure:
+
+	Regenerates the configure script (using autoreconf)
+
+	You can pass additional parameters to configure through the EXTRA_OECONF variable
+
+do_compile:
+
+	Runs make with arguments that specify the compiler and linker
+
+	You can pass additional arguments through the EXTRA_OEMAKE variable
+
+do_install:
+
+	Runs make install and passes in ${D} as DESTDIR
+
+
+
+EXTRA_OECONF
+-------------
+
+The configure script may also give you the opportunity to enable or disable certain features
+
+You can find the options that is offered by running
+
+./configure --help
+
+./configure --enable-something
+
+Yocto support
+--------------
+EXTRA_OECONF is used to add extra options to the configure script.
+
+EXTRA_OECONF += "--enable-something" 
+
+
+======================================================================================================
+What is CMake?
+-----------------
+
+From Wikipedia,
+
+CMake is a cross-platform free and open-source software tool for managing the build process of software using a compiler-independent method.
+
+From CMake Website,
+
+CMake is an extensible, open-source system that manages the build process in an operating system and in a compiler-independent manner.
+
+
+CMake vs Autotools
+------------------
+
+CMake is a cross-platform build system that can work not only with GNU make, but also Microsoft Visual Studio and Apple's Xcode
+
+Once you write configuration file for CMake, you can generate 
+	Makefile in Unix/Linux
+	Visual Studio Solution in Windows
+
+Popular Open Source Project with CMake
+-----------------------------------------
+	OpenCV: https://github.com/opencv/opencv
+	Caffe2: https://github.com/caffe2/caffe2
+	MySql Server: https://github.com/mysql/mysql-server
+
+
+
+Installation
+--------------
+
+To install CMake in Linux, just simply run in your terminal
+
+# For Ubuntu
+
+$ sudo apt-get install cmake
+
+# For Redhat
+
+$ yum install cmake
+
+
+Hello World CMake
+-------------------
+
+Step1: Create a hello world C program (userprog.c)
+
+#include <stdio.h>
+int main()
+{
+	printf("Hello CMake\n");
+	return 0;
+}
+
+Step2: Create a file CMakeLists.txt in the same folder
+
+File CMakeLists.txt is the input to the CMake build system for building software packages
+
+It contains a set of directives and instructions describing the project's source files and targets (executable, library, or both)
+
+add_executable(userprog userprog.c)
+
+The above directive/instruction will build userprog executable from userprog.c file
+
+Step3: CMake generates a bunch of files in the place where we run it, so it’s good practice to have a separate directory for that
+
+$ mkdir build 
+$ cd build
+$ cmake ..
+
+.. as CMakeLists.txt is present in the parent directory
+
+The first time we run cmake in this directory it will take a few seconds, detecting the C and C++ compilers to use and some information about them
+
+The information CMake finds about the compiler is stored in CMakeCache.txt, one of the generated files, so it does not have to do the chores again every time we run it
+
+Step4: Generate the executable
+
+$ make
+or
+$ cmake --build
+
+
+
+Add the following to CMakeLists.txt
+---------------------------------------
+
+CMake Version
+---------------
+
+cmake_minimum_required(VERSION 2.8.3)
+
+Sets a minimum required version for CMake
+
+It is used to avoid any cryptic error messages due to the CMakeLists.txt assuming a later version of CMake than the one installed on the current host.
+
+Project Name
+-----------
+
+project(cmake_recipe)
+
+Declares the name of the project
+
+What is a project
+------------------
+A project logically groups a number of targets (that is, libraries, executables and custom build steps) into a self-contained collection that can be built on its own.
+
+
+
+Installation
+---------------
+
+If you want to be able to do a "make install" of your code, you need to specify where targets should end up
+
+This is done using the CMake install() function:
+
+The syntax for executable is
+
+install (TARGETS Executablename DESTINATION bin)
+
+install (TARGETS userprog DESTINATION bin)
+
+
+CMAKE_INSTALL_PREFIX
+----------------------
+
+If “make install” is invoked or INSTALL is built, this directory is prepended onto all install directories.
+
+This variable defaults to /usr/local on UNIX
+
+To install your binaries in /usr/bin
+
+$ cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+$ make
+$ make install
+
+
+Recipe for cmake package
+-----------------------------
+
+Applications that use cmake require
+
+	a recipe that has a source archive listed in SRC_URI
+
+	also inherit the cmake class
+
+Generally the CMake build system knows how to install the software so a overwrite over do_install is not necessary
+
+EXTRA_OECMAKE
+----------------
+
+Variable can be used to pass any needed configure options that are specific to the recipe.
+
+
+
+
+Devshell - Development Shell
+-----------------------------
+
+The Yocto build system handles all the steps needed to build software from scratch by following the Yocto recipes. 
+When editing packages or debugging build failures, a development shell can be a useful tool.
+
+What is devshell?
+-----------------
+
+The devshell is a terminal shell that runs in the same context as the BitBake task engine
+
+In the new terminal, all the environment variables needed for the build are still defined, so we can use commands such as configure and make
+
+The commands execute just as if the build system was executing them.
+
+Command:
+----------
+
+$ bitbake -c devshell <recipename>
+
+$ bitbake -c devshell myhello
+
+What happens when you run the command?
+--------------------------------------
+
+Starts a shell whose environment is set up for development, debugging, or both.
+
+All tasks up to and including do_patch are run for the specified target
+
+Then, a new terminal is opened and you are placed in ${S}, the source directory.
+
+When you are finished using devshell, exit the shell or close the terminal window.
+
+
+
+Devshell
+-----------
+
+Devshell provides you with an interactive shell with all the appropriate variables set for cross-compiling
+
+$ echo $CC
+
+$ echo $PATH
+
+$ echo $CXX
+
+$ echo $LDFLAGS
+
+$ echo $CFLAGS
+
+Now you can make modifications and compile and generate an executable
+
+$ ${CC} -DUSE_SYSCALL userprog.c ${LDFLAGS} -o userprog
+
+Try other recipes which we wrote for example mymakefile
+
+----------
+
+To manually run a specific task using devshell, run the corresponding run.* script in the ${WORKDIR}/temp directory (e.g., run.do_configure.pid)
+
+If a task's script does not exist, you can create the task by first running it outside of the devshell:
+
+$ bitbake -c task
+
+Execution of a task's run.* script and BitBake's execution of a task are identical.
+
+In other words, running the script re-runs the task just as it would be run using the bitbake -c command.
+
+Any run.* file that does not have a .pid extension is a symbolic link (symlink) to the most recent version of that file.
+
+----------
+
+It is important to bear in mind that all changes made inside devshell are not persistent between builds; thus, we must be careful to record any change that is important, prior to leaving it
+
+As we have the source at our disposal, we can use it to generate extra patches.
+
+One very practical way of doing that is using Git and git format-patch to create the patch to be included in the recipe afterwards.
+
+If the recipe doesn't use git, we need to create repository
+
+$ git init
+
+$ git add userprog.c 
+
+$ git commit -m "First commit"
+
+Make Modifications
+
+$ git status
+
+$ git add userprog.c
+
+$ git commit -m "Second Commit"
+
+$ git format-patch -1 -o ~/Yocto_Training/source/meta-mylayer/recipes-examples/myhello/files/
+
+Update SRC_URI now
+
+
+
+
+Understanding file searching paths
+----------------------------------
+
+When a file (a patch or a generic file) is included in SRC_URI, Bitbake searches for FILESPATH and FILESEXTRAPATH variables.
+
+The default value for the FILESPATH variable is defined in the base.bbclass class found in meta/classes
+
+FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", "${FILE_DIRNAME}/${BPN}", "${FILE_DIRNAME}/files"], d)}"
+
+The value is a colon-separated list of directories that are searched left-to-right in order.
+
+The default setting is to look in the following locations:
+
+	<recipe>-<version>
+	<recipe>
+	<files>
+
+
+$ bitbake -e myhello | grep ^FILESPATH=
+
+Note:  Do not hand-edit the FILESPATH variable
+
+
+FILESOVERRIDES
+---------------
+
+Custom paths and files can be added using FILESEXTRAPATHS and FILESOVERRIDES.
+
+The FILESPATH variable is automatically extended using the overrides from the FILESOVERRIDES variable.
+
+FILESOVERRIDES = "${MACHINEOVERRIDES}:${DISTROOVERRIDES}"
+
+$ bitbake -e myhello | grep ^FILESOVERRIDES=
+
+
+You can take advantage of this searching behavior in useful ways. 
+
+Try: Change the MACHINE  in local.conf and check FILESOVERRIDES value
+
+For example, you want to have different defconfigs for different Machines
+
+     files/defconfig
+     files/MACHINEA/defconfig
+     files/MACHINEB/defconfig
+
+SRC_URI = "file://defconfig"
+
+When MACHINE = MACHINEA build system uses files from files/MACHINEA.
+When MACHINE = MACHINEB build system uses files from files/MACHINEB.
+For other machines, it will uses files/defconfig
+
+
+
+FILESEXTRAPATHS
+----------------
+
+Extends the search path the OpenEmbedded build system uses when looking for files and patches as it processes recipes and append files.
+
+FILESEXTRAPATHS_prepend := "${THISDIR}:"
+
+THISDIR		The directory in which the file BitBake is currently parsing is located.
+
+Best practices dictate that you accomplish this by using FILESEXTRAPATHS from within a .bbappend file and that you prepend paths as follows:
+
+FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
+
+
+
+splash screen
+--------------
+
+We have enabled splash screen by
+
+IMAGE_FEATURES += "splash"
+
+We get a splash screen with yocto logo
+
+psplash
+---------
+
+By default, this screen is provided by psplash
+
+PSplash is a userspace graphical boot splash screen for mainly embedded Linux devices supporting a 16bpp or 32bpp framebuffer.
+
+Recipe: psplash found under "poky/meta-poky/recipes-core"
+
+It uses an encoded image psplash-poky-img.h which it compiles /usr/bin/psplash to binary
+
+
+Changing custom splash screen
+-----------------------------
+
+Psplash expects an image to be in header file format, so you need to convert your image into a header file format by using script called "make-image-header.sh"
+
+source - http://git.yoctoproject.org/cgit/cgit.cgi/psplash/tree/make-image-header.sh
+
+Command:
+--------
+
+./make-image-header.sh <path_to_image_file> <NAME>
+
+$ ./make-image-header.sh logo.png POKY
+
+Rename it to psplash-poky-img.h
+
+We can give a  different NAME but it requires modification to source psplash.c
+
+$ mv logo-img.h psplash-poky-img.h
+
+Replace your generated image header in poky/meta-poky/recipes-core/psplash/files
+
+
+
+Extending a Recipe
+------------------------------
+
+It is a good practice not to modify recipes available in Poky
+
+But it is sometimes useful to modify an existing recipe
+
+Copy Approach:
+--------------
+Copy recipe in your layer and make modifications in the recipe
+
+Extend Approach:
+-----------------
+The BitBake build engine allows to modify a recipe by extending it
+
+What is Bitbake Append?
+--------------------------
+
+A recipe that appends Metadata to another recipe is called a BitBake append file.
+
+File Extension: .bbappend
+
+You can use a .bbappend file in your layer to make additions or changes to the content of another layer's recipe without having to copy the other layer's recipe into your layer
+
+.bbappend file	resides in your layer
+
+.bb recipe file to which you are appending Metadata resides in a different layer.
+
+
+Benefits of bbappend
+---------------------
+
+If you were copying recipes, you would have to manually merge changes as they occur.
+
+Being able to append information to an existing recipe not only avoids duplication, but also automatically applies recipe changes from a different layer into your layer.
+
+Points to Consider while working with .bbappend
+-----------------------------------------------
+
+1. Appended files must have the same root name as the recipe they extend
+
+	Eg. example_0.1.bbappend applies to example_0.1.bb
+
+This means the original recipe and append file names are version number-specific.
+
+If the corresponding recipe is renamed to update to a newer version, you must also rename and possibly update the corresponding .bbappend as well.
+
+During the build process, BitBake displays an error on starting if it detects a .bbappend file that does not have a corresponding recipe with a matching name
+
+2. If adding new files, you must prepend the FILESEXTRAPATHS variable with the path to files’ directory
+
+
+
+Prioritizing Your Layer
+------------------------
+
+Each layer is assigned a priority value. 
+
+Priority values control which layer takes precedence if there are recipe files with the same name in multiple layers. 
+
+For these cases, the recipe file from the layer with a higher priority number takes precedence.
+
+Priority values also affect the order in which multiple .bbappend files for the same recipe are applied. 
+
+To specify the layer's priority manually, use the BBFILE_PRIORITY variable and append the layer's root name:
+
+     BBFILE_PRIORITY_mylayer = "1"
+
+Note: the layer priority does not currently affect the precedence order of .conf or .bbclass files.
+
+
+Use .bbappend for splash screen
+
+How to validate whether my bbappend is successfully applied to recipe?
+----------------------------------------------------------------------
+
+$ bitbake-layers show-appends
+
+Lists .bbappend files and the recipe files to which they apply.
+
+
+
+======================================================================================================
+
+
 Setup Yocto Plugin with Eclipse:
 
 https://develop.phytec.com/how-to-articles/how-to-set-up-yocto-plugin-for-eclipse#Howto:SetUpYoctoPluginforEclipse-EclipseSetup
