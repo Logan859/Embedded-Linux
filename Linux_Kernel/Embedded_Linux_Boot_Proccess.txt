@@ -1,0 +1,30 @@
+=========================================================================
+The Linux Boot Process
+=========================================================================
+A target board booting Linux proceeds through several steps after reset to get to a system prompt.
+The initial steps, such as ROM startup code and register configuration, are microprocessor hardware dependent.
+The kernel itself contains microprocessor architecture dependent initialization code that is executed first.
+This initialization code configures the microprocessor registers for protected-mode operation and then invokes 
+the architecture-independent kernel starting point called start_kernel. From this point on, the kernel boot 
+process is identical for all architectures.
+
+The Linux boot process involves the following steps:
+
+[1] After a processor is reset, it executes ROM startup code.
+[2] The ROM startup code initializes the CPU, memory controller, and on-chip devices, and it configures the memory map. The ROM startup code then executes a bootloader.
+[3] The bootloader decompresses the Linux kernel into RAM from Flash memory or a TFTP server transfer. It then executes a jump to the kernel's first instruction. The kernel first configures microprocessor registers and then invokes start_kernel, which is the architecture-independent starting point.
+[4] The kernel initializes its caches and various hardware devices.
+[5] The kernel mounts the root filesystem.
+[6] The kernel executes the init process.
+[7] The executing init process loads shared runtime libraries.
+[8] init reads its configuration file, /etc/inittab, and executes scripts. Typically, init executes a startup script, /etc/rc.d/rcS, which configures and starts networking and other system services.
+[9] init enters a runlevel where system duties can be performed or the login process can start, allowing for user sessions.
+
+
+-> The Project Trailblazer engineers learned from the board manufacturers' documentation that steps 1, 2 and 3 are fairly easy to understand, configure, and execute. Step 4 is dependent on kernel compilation configuration. Step 5 presents a wide range of options, including mounting a local disk drive, mounting a network drive, and using a RAM disk. Step 7 requires proper compilation of glibc and other libraries.
+
+-> The engineers read about replacing the init program with bash directly in step 6. They opted to use init for two reasons. First, init can handle initialization of networking and system services via scripts. Second, in step 9 the engineers will use init to call bash directly instead of using the login process. init can respawn processes that terminate. This means that if bash terminates, init will re-execute it. Use of init fulfills PBR-2. Having bash execute directly instead of login allows console operations without security. The engineers intend to add the login process prior to placing the target board in field operations.
+
+TIP
+
+Having init call bash directly instead of login saves time because you don't have to log in during development. In a secure lab, convenience outweighs security. When you deploy designs, you should modify /etc/inittab so that init calls login, to provide the first level of authentication.
